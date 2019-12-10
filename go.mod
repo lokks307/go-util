@@ -7,4 +7,5 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/youmark/pkcs8 v0.0.0-20191102193632-94c173a94d60
 	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+	software.sslmate.com/src/go-pkcs12 v0.0.0-20190322163127-6e380ad96778
 )
