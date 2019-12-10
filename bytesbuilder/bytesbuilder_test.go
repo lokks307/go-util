@@ -1,8 +1,9 @@
 package bytesbuilder
 
 import (
-	"bytes"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -23,10 +24,7 @@ func TestByteBuilder_AppendBaseXX(t *testing.T) {
 	bytesData := builder.GetBytes()
 	strData := string(bytesData)
 
-	if strData != originDataForB64+originDataForB58 {
-		t.Errorf("TestByteBuilder_AppendBaseXX failed: want '%s', got '%s'",
-			originDataForB64+originDataForB58, strData)
-	}
+	assert.Equal(t, strData, originDataForB64+originDataForB58, "They should be Equal")
 }
 
 func TestByteBuilder_AppendHex(t *testing.T) {
@@ -37,10 +35,7 @@ func TestByteBuilder_AppendHex(t *testing.T) {
 	bytesData := builder.GetBytes()
 	strData := string(bytesData)
 
-	if strData != originDataFroHex {
-		t.Errorf("TestByteBuilder_AppendHex failed: want '%s', got '%s'",
-			originDataFroHex, strData)
-	}
+	assert.Equal(t, strData, originDataFroHex, "They should be Equal")
 }
 
 func TestByteBuilder_CommonAppend(t *testing.T) {
@@ -88,8 +83,5 @@ func TestByteBuilder_CommonAppend(t *testing.T) {
 
 	bytesData := builder.GetBytes()
 
-	if !bytes.Equal(expected, bytesData) {
-		t.Errorf("TestByteBuilder_CommonAppend failed: want '%x', got '%x'",
-			expected, bytesData)
-	}
+	assert.Equal(t, expected, bytesData, "They should be Equal")
 }

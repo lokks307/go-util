@@ -2,6 +2,8 @@ package pem
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -55,36 +57,25 @@ func TestPEM_PasrseX509Cert_Sucess(t *testing.T) {
 		t.Fatalf(parseErr.Error())
 	}
 
-	if subCountry != cert.Subject.Country[0] {
-		t.Fatalf("country - expect:%v, actual:%v", subCountry, cert.Subject.Country[0])
-	}
-
-	if subOrganization != cert.Subject.Organization[0] {
-		t.Fatalf("organization - expect:%v, actual:%v", subOrganization, cert.Subject.Organization[0])
-	}
-
-	if subCommonName != cert.Subject.CommonName {
-		t.Fatalf("common name - expect:%v, actual:%v", subCommonName, cert.Subject.CommonName)
-	}
+	assert.Equal(t, subCountry, cert.Subject.Country[0], "They should be equal")
+	assert.Equal(t, subOrganization, cert.Subject.Organization[0], "They should be equal")
+	assert.Equal(t, subCommonName, cert.Subject.CommonName, "They should be equal")
 }
 
 func TestPEM_PasrseX509Cert_Fail(t *testing.T) {
 	_, parseErr := ParseX509Cert("this is not a pem format")
-	if parseErr == nil {
-		t.Fatalf("This case must make error but no error")
-	}
+
+	assert.NotNil(t, parseErr, "This case must make error but no error")
 }
 
 func TestPEM_VerifyCert_True(t *testing.T) {
 	check := VerifyCert(testCertPem, testTrueCAcertPem)
-	if !check {
-		t.Fatalf("verify cert - expect:%v, actual:%v", true, false)
-	}
+
+	assert.True(t, check, "Verification must succeed")
 }
 
 func TestPEM_VerifyCert_False(t *testing.T) {
 	check := VerifyCert(testCertPem, testFalseCAcertPem)
-	if check {
-		t.Fatalf("verify cert - expect:%v, actual:%v", false, true)
-	}
+
+	assert.False(t, check, "Verification must fail")
 }

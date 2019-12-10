@@ -2,6 +2,8 @@ package ecdsa
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -56,16 +58,13 @@ func TestEcdsa_SignVerifyNoPasswordCase_Success(t *testing.T) {
 	}
 
 	success := Verify([]byte(testMsg), signature, testNoPassCert)
-	if !success {
-		t.Errorf("TestEcdsa_CaseOfNoPassword failed: want '%t', got '%t'", true, success)
-	}
+
+	assert.True(t, success, "Verification must succeed.")
 }
 
 func TestEcdsa_SignVerifyNoPasswordCase_Fail_WrongPem(t *testing.T) {
 	_, err := Sign([]byte(testMsg), "this is not a pem format", "")
-	if err == nil {
-		t.Error("This case must make error but no error")
-	}
+	assert.NotNil(t, err, "This case must make error but no error")
 }
 
 // password가 있는 private key pem의 경우는 문제가 있어서 TEST 하지 않습니다

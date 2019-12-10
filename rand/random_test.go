@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_GenRandom(t *testing.T) {
@@ -13,9 +14,7 @@ func Test_GenRandom(t *testing.T) {
 		b64str, _ := GenRandomB64Str(length)
 		decoded, _ := base64.StdEncoding.DecodeString(b64str)
 
-		if len(decoded) != length {
-			t.Fatalf("Check size - expect: %v, actual: %v", length, len(decoded))
-		}
+		assert.Len(t, decoded, length, "They should be equal")
 	})
 
 	t.Run("Base58 string", func(t *testing.T) {
@@ -23,9 +22,7 @@ func Test_GenRandom(t *testing.T) {
 		b58str, _ := GenRandomB58Str(length)
 		decoded := base58.Decode(b58str)
 
-		if len(decoded) != length {
-			t.Fatalf("Check size - expect: %v, actual: %v", length, len(decoded))
-		}
+		assert.Len(t, decoded, length, "They should be equal")
 	})
 
 	t.Run("Random Seed", func(t *testing.T) {
@@ -45,8 +42,6 @@ func Test_GenRandom(t *testing.T) {
 		length := 32
 		randomSeed := GenRandomSeed(testCertPem)
 
-		if len(randomSeed) != length {
-			t.Fatalf("Check size - expect: %v, actual: %v", length, len(randomSeed))
-		}
+		assert.Len(t, randomSeed, length, "They should be equal")
 	})
 }
