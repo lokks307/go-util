@@ -53,9 +53,7 @@ AwIDRwAwRAIgZCNKWjire6lkJvQvmOhpKwM9fJZn5ViJZEQyRP2q6MMCIAGtHn2j
 
 func TestEcdsa_SignVerifyNoPasswordCase_Success(t *testing.T) {
 	signature, err := Sign([]byte(testMsg), testSkNoPass, "")
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err, "Signature generation failed")
 
 	success := Verify([]byte(testMsg), signature, testNoPassCert)
 
@@ -70,9 +68,7 @@ func TestEcdsa_SignVerifyNoPasswordCase_Fail_WrongPem(t *testing.T) {
 // 19.12.11: lokks307/pkcs8로 변경 후 테스트 통과 확인
 func TestEcdsa_CaseOfPassword(t *testing.T) {
 	signature, err := Sign([]byte(testMsg), testSkPass, "password")
-	if err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t, err, "Signature generation failed")
 
 	success := Verify([]byte(testMsg), signature, testPassCert)
 	assert.True(t, success, "Verification must succeed.")
