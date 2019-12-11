@@ -67,7 +67,7 @@ func TestEcdsa_SignVerifyNoPasswordCase_Fail_WrongPem(t *testing.T) {
 	assert.NotNil(t, err, "This case must make error but no error")
 }
 
-// 19.12.11: lokks307/pkcs8로 변경 후 테스트 통과
+// 19.12.11: lokks307/pkcs8로 변경 후 테스트 통과 확인
 func TestEcdsa_CaseOfPassword(t *testing.T) {
 	signature, err := Sign([]byte(testMsg), testSkPass, "password")
 	if err != nil {
@@ -75,7 +75,5 @@ func TestEcdsa_CaseOfPassword(t *testing.T) {
 	}
 
 	success := Verify([]byte(testMsg), signature, testPassCert)
-	if !success {
-		t.Errorf("TestEcdsa_CaseOfNoPassword failed: want '%t', got '%t'", true, success)
-	}
+	assert.True(t, success, "Verification must succeed.")
 }
