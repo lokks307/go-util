@@ -66,9 +66,32 @@ cvSzwtFWNkyQXfE6VYu/BAhq5OgX2kr3DAICCAA=`
 
 func TestDecode(t *testing.T) {
 	var pswd = ""
-	_, cert, err := DecodePFX(testBase64, pswd)
+	_, cert, err := DecodePFXB64(testBase64, pswd)
 
 	assert.Nil(t, err, "Decoding error")
 
 	fmt.Println(cert.Subject)
 }
+
+// func TestBase64(t *testing.T) {
+// 	// 	var b64txt string = `SGVsbG8sIGdvbGFuZy
+// 	// ENCkknbSBiYXNlNjQ=`
+// 	// b64txt = strings.ReplaceAll(b64txt, "\n", "")
+// 	// b64txt = strings.ReplaceAll(b64txt, "\r", "")
+
+// 	block, rest := pem.Decode([]byte(testBase64))
+
+// 	fmt.Println(block)
+// 	fmt.Println(rest)
+
+// 	// var dst []byte
+// 	// len, _ := base64.StdEncoding.Decode(dst, block.Bytes)
+
+// 	// fmt.Println(len)
+
+// 	var pswd = ""
+// 	_, cert, _ := pkcs12.Decode(block.Bytes, pswd)
+
+// 	fmt.Println(cert)
+
+// }
