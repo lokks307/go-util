@@ -3,6 +3,8 @@ package pfx
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -66,9 +68,7 @@ func TestDecode(t *testing.T) {
 	var pswd = ""
 	_, cert, err := DecodePFX(testBase64, pswd)
 
-	if err != nil {
-		fmt.Println(err.Error())
-		t.Fatalf("decoding error")
-	}
+	assert.Nil(t, err, "Decoding error")
+
 	fmt.Println(cert.Subject)
 }
