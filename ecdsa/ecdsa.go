@@ -7,7 +7,7 @@ import (
 
 	"github.com/lokks307/go-util/pem"
 
-	"github.com/youmark/pkcs8"
+	"github.com/lokks307/pkcs8"
 )
 
 // TODO: write log
