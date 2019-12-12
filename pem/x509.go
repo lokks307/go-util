@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
+	"fmt"
+	"github.com/lokks307/pkcs8"
 	"io/ioutil"
 	"strings"
 )
@@ -63,6 +65,7 @@ func ParsePEM(dataB64 string, pswd ...string) []byte {
 
 		if x509.IsEncryptedPEMBlock(pemBlock) { // pem could be encrypted
 			// TODO: pswd length...
+
 			result, decryptErr = x509.DecryptPEMBlock(pemBlock, []byte(pswd[0]))
 			if decryptErr != nil {
 				result = nil
@@ -109,8 +112,19 @@ func GetCertificateB64(dataB64 string) (*x509.Certificate, error) {
 // If you modify this function or whole file, please inform to tethys team
 func GetPrivateKey(dataB64, password string) (key interface{}, err error) {
 	derBytes := ParsePEM(dataB64, password)
-	privKey, error := x509.ParsePKCS8PrivateKey(derBytes)
-	return privKey, error
+	privKey, _, err := pkcs8.ParsePrivateKey(derBytes, []byte(password))
+	if err != nil {
+		fmt.Println(err.Error())
+		pkcs1Key, parseErr := x509.ParsePKCS1PrivateKey(derBytes)
+
+		if parseErr != nil {
+			return nil, parseErr
+		}
+
+		return pkcs1Key, nil
+	}
+
+	return privKey, nil
 }
 
 func VerifyCert(pemData, CApemData string) bool {
