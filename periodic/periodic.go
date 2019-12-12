@@ -1,4 +1,4 @@
-package scheduler
+package periodic
 
 import (
 	"errors"

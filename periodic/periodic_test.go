@@ -1,4 +1,4 @@
-package scheduler
+package periodic
 
 import (
 	"testing"
@@ -87,4 +87,28 @@ func Test_Scheduler_CancelTask(t *testing.T) {
 
 	taskListLen = len(s.taskList)
 	assert.Equal(t, taskListLen, 0, "Task list size shoud be 0")
+}
+
+func Test_Scheduler_AnonymousFunc(t *testing.T) {
+	globalVal1 = 0
+	globalVal2 = 0
+
+	anonymousFunc := func() {
+		globalVal1++
+	}
+
+	anonymousFuncWithParam := func(a, b int) {
+		globalVal2 = globalVal2 + a + b
+	}
+
+	s := NewScheduler()
+	s.RegisterTask(time.Millisecond*500, true, "anonymous1", anonymousFunc)
+	s.RegisterTask(time.Millisecond*500, false, "anonymous2", anonymousFuncWithParam, 1, 1)
+
+	s.Run()
+	time.Sleep(time.Millisecond * 750)
+	s.Stop()
+
+	assert.Equal(t, 2, globalVal1, "globalVal1 should be 2")
+	assert.Equal(t, 2, globalVal2, "globalVal2 should be 2")
 }
