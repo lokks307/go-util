@@ -1,14 +1,8 @@
 package pem
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/base64"
-	"fmt"
-	"reflect"
 	"testing"
 
-	"github.com/lokks307/pkcs8"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -193,6 +187,35 @@ dn/FcnjTwc718L6dktJKlPBV8XPcwpMo/eM8tiOZlbe0KyNL4fjaiUI00+b4zLUL
 id2CcBLTfOickzFKIqkHXoWvWCDWvQo0QaCEW30p+c1f
 -----END ENCRYPTED PRIVATE KEY-----`
 
+	testRSASecretEncPkcs8Der = `MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI3hhFTiCsN5QCAggA
+MAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAECBBDJ3UV5TjKjfp5wxEN0gZdnBIIE
+0L1+YE23Fb/Mdi03yGtcWuouMtDpLVVbhNyKMM/OQTYezayXOoo8rjhzwU9VIGdu
+LmNj7/fzsb6hxuJ6SZ5pb22ATWLGaxGZpT3UZHW7teenBNVhpJFQPebz4oqnXt4u
+mFB/nEjdd7S5rUQF7WL7y1lEpnf1DtvcFvXIMsztAWfkHqXOCYRi/pjgyZOLQlmb
+JN2wsfRlcJJ3raxdLoN209OZm467r0lKzTb1UKpcJ+vPAEktF2HdGHFaotjsH2xC
+IgjkHJhxZIXdS9EVBYHCV5CQOKNCDyx8GtbIHb57fwUc1BR6AgPnFF+//RpN6pp8
+C6JZo784TZYzSnQVY33vzxwJ1OQIL0RgLv7oSAZgl1UZSLW56qQgXrJW8IoD4UCb
+bgRLk+ljJPuyO9fyDHR2VlTl3eQMNg4/lnEls3vUaphjamVdrynq9d7xa5q6FI3k
+QcQUXrVhx3ZqI16xF/zjmiIRk0tzo9yaPV2UIhJn3pCkcWWQfEyMeZ1rLNQtLwtp
+wQqLUsvhmW1BX8ZN0z46rPHs0lAijAttjMArVCdm/SnZw2JJ5jkrc7ba3zqOnzJD
+hBFam2Wsg/C87/4YzjKqtjULFb1XqYKCTnSsGb7N3vHkTBa1HEafYMN3kMk9UArx
+UBwFCryYj1/WJsGqX7Stiuu4HEXcv2m0EFmgmRUxE+iKCQM+ASS//MjciOGBgAdE
+6qyh1c7lCkxixSPE4omtpArzueQ7cB0e2Ylt7q01Wuy/g8p93kQ1E8lqiYLQM2VL
+L9V4D0Pxf2VaVGi1dUYW9OtVMRgZaL6zqNfrCIeWkO/W428UhxTgIpYrxZBe4ucu
+9YAYm62BwGio9Nd/TacD3aPVzxA8Sk/TSdfoSfuAYS7gsxhdcNnS32R09E7sQ0SF
+YG9gNbSvZBkFxmcF3/QwA5UAWY2hu5+cVkNiTSPjOuLDP6Trik7wnoii09hATMPO
+aRtodHwS6yUl/o4KRKxV05mN4szQRGpfcvrJiTjDur0uIc1Hm3HoEE/xR/Gv3eQx
+tNP3DSbFVqZgula3YqAzbwcUuyCTtwT3sfBQrOoXjmqopP9PYHq9ksQq3ua5dUlU
+WUvDYmYD6efftWgM78h6xh9yGK2fVqYHYgJnYb6mjrqRjkvClPimEqeh9KWc2RCc
+/cZU4ZcwFurcDXGtbNyglJPb3BsrBmiNdJnqg+z9IKsk1S5YeljLzitGBRo/7PRb
+J801zRm3IlVFuJEY3FqRr7xTKNAwX+C7el6YNYpGR+LzU4MYNtU4iq1avy8LqeT7
+l/xeGCJTPWSiS3dwhKKzm07Xkv8rYrot55gEy6U0DxAU/h2SitO9H221AdjKW9GE
+zJamFNYgidUup0FLhYoMJvdxTae7ZRAVjLqsHVYFWmRhVOuA2SDiq1+3vgxfzFpV
+vJa7X219nPML4I9IVfgv6yeMfCJDVfwBDk1C4v2WEB9DpEf62pJh7iM9Z54RjJ5q
+RJCJzav6rcesvyXM02tUVDGv3lZk0/zqy4n5Qqv9RW2DwegxZRh2+U3n0giUNExX
+dn/FcnjTwc718L6dktJKlPBV8XPcwpMo/eM8tiOZlbe0KyNL4fjaiUI00+b4zLUL
+id2CcBLTfOickzFKIqkHXoWvWCDWvQo0QaCEW30p+c1f`
+
 	subCountry      = "kr"
 	subOrganization = "lokks"
 	subCommonName   = "test-name"
@@ -240,24 +263,18 @@ func TestPEM_GetCertificateB64_Success(t *testing.T) {
 }
 
 func TestPEM_GetPrivateKey(t *testing.T) {
-	sKey, err := GetPrivateKey(testRSASecret, "")
-	assert.Nil(t, err, "[PrivKey]: Private key pem parsing failed")
+	_, err := GetPrivateKey(testRSASecret, "")
+	assert.Nil(t, err, "[PKCS#1]: Private key pem parsing failed")
 
-	sKey, err = GetPrivateKey(testRSASecretDer, "")
-	assert.Nil(t, err, "[PrivKey]: Private key der parsing failed")
+	_, err = GetPrivateKey(testRSASecretDer, "")
+	assert.Nil(t, err, "[PKCS#1]: Private key der parsing failed")
 
-	sKey, err = GetPrivateKey(testRSASecretEnc, "password")
-	assert.Nil(t, err, "[PrivKey]: Private key pem with password parsing failed")
+	_, err = GetPrivateKey(testRSASecretEnc, "password")
+	assert.Nil(t, err, "[PKCS#1]: Private key pem with password parsing failed")
 
-	testBlock, _ := DecodePEM(testRSASecretEncPkcs8)
-	fmt.Println(testBlock.Type, "/", testBlock.Headers)
-	fmt.Println(base64.StdEncoding.EncodeToString(testBlock.Bytes))
-	testKey, _ := pkcs8.ParsePKCS8PrivateKey(testBlock.Bytes, []byte("password"))
-	fmt.Println(x509.IsEncryptedPEMBlock(testBlock))
-	fmt.Println(reflect.TypeOf(testKey))
+	_, err = GetPrivateKey(testRSASecretEncPkcs8, "password")
+	assert.Nil(t, err, "[PKCS#8]: Private key pem with password parsing failed")
 
-	sKey, err = GetPrivateKey(testRSASecretEncPkcs8, "password")
-	fmt.Println(sKey.(*rsa.PrivateKey).D)
-	assert.Nil(t, err, "[PrivKey]: Private key der with password parsing failed")
-
+	_, err = GetPrivateKey(testRSASecretEncPkcs8Der, "password")
+	assert.Nil(t, err, "[PKCS#8]: Private key der with password parsing failed")
 }
