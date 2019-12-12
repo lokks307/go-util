@@ -53,9 +53,7 @@ GSn98xMCIQCvDHAHFPn6yJ+9u9/GMMr5vUXRAPKEgGMglDkAxzGhlg==
 
 func TestPEM_PasrseX509Cert_Sucess(t *testing.T) {
 	cert, parseErr := ParseX509Cert(testCertPem)
-	if parseErr != nil {
-		t.Fatalf(parseErr.Error())
-	}
+	assert.Nil(t, parseErr, "Certificate parsing failed")
 
 	assert.Equal(t, subCountry, cert.Subject.Country[0], "They should be equal")
 	assert.Equal(t, subOrganization, cert.Subject.Organization[0], "They should be equal")
