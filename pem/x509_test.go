@@ -46,6 +46,28 @@ ajAKBggqhkjOPQQDAgNJADBGAiEAwtX7m9pskUj/Y+xPT8thR/LlPVrKWxADHR3k
 GSn98xMCIQCvDHAHFPn6yJ+9u9/GMMr5vUXRAPKEgGMglDkAxzGhlg==
 -----END CERTIFICATE-----`
 
+	testCertDER = `MIIDwTCCAqkCFAFLClhfd7ogpF2ghCmasR6Zp5nrMA0GCSqGSIb3DQEBCwUAMIGc
+MQswCQYDVQQGEwJLUjETMBEGA1UECAwKU29tZS1TdGF0ZTEQMA4GA1UEBwwHSW5j
+aGVvbjEWMBQGA1UECgwNTG9ra3MzMDcgSW5jLjEcMBoGA1UECwwTUmVzZWFyY2gg
+ZGVwYXJ0bWVudDERMA8GA1UEAwwIbG9ra3MuaW8xHTAbBgkqhkiG9w0BCQEWDmNh
+dGh5QGxva2tzLmlvMB4XDTE5MTIxMjAxNDEzMloXDTI5MTIwOTAxNDEzMlowgZwx
+CzAJBgNVBAYTAktSMRMwEQYDVQQIDApTb21lLVN0YXRlMRAwDgYDVQQHDAdJbmNo
+ZW9uMRYwFAYDVQQKDA1Mb2trczMwNyBJbmMuMRwwGgYDVQQLDBNSZXNlYXJjaCBk
+ZXBhcnRtZW50MREwDwYDVQQDDAhsb2trcy5pbzEdMBsGCSqGSIb3DQEJARYOY2F0
+aHlAbG9ra3MuaW8wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCtz+uv
+XFJ9H99V+JV3XVGIxo4YCS8sQpHgQhfWbFbbcrKWRdMQS9Ftu2R45UBRpF9JTuoR
+FqL7XcT7ZlgahdcxLX2W7usOIl4gvRgqMjQytaam9GJ1inkSYaRAgkDYNrsbxmBO
+XGcIak+D6rWa9KpFxueDespHinkKjocXEeEhYTZFvMB4lxAMdVqMo8X+Y9QOlKSo
+rjhlAOKByyJY67gjXBht7OJQvs1VoA84dgncZE4HIB6xaCk/rUnd8SyOoZJbNx+7
+YOsimljnaH86HYdg5EYxoanjacN/yiYdgkbjAgR/rORAOXW4UZXuE7tzgGzID5Un
+4j9pD98ymZdV8y47AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAE2UNkvHbYQo90xz
+1t/eZcs1TfE3XlehU2tXFHFPmZTtlHtFn8D3dE/sWIjFSCLX0bo1TpRLAat80yd3
+c8K4M/J9RAYqIbJa4dlrsoBO9kT1RQRvz9FYQjaGZORB+5IpofwEJ3AVikaTWGxO
+vzL0+0oDz/zAalPEHouxEYqdpV++g3yGh+RWBkDKnge8XryIyfWU4rp1FkcZg7nc
+6TKlAdPRPH90hOISZm8Uqi3mnihz0hxm35aBBVa3ikIoO68P5xLSelwJMwulGKpo
+AJl1K2H5gcWCOhit6eK7TaGA5diBtiW6584yV21KAtBmLZvsUmYz3RKJdRtsVPd0
+rwHPeG0=`
+
 	subCountry      = "kr"
 	subOrganization = "lokks"
 	subCommonName   = "test-name"
@@ -76,4 +98,18 @@ func TestPEM_VerifyCert_False(t *testing.T) {
 	check := VerifyCert(testCertPem, testFalseCAcertPem)
 
 	assert.False(t, check, "Verification must fail")
+}
+
+func TestPEM_GetCertificateB64_Success(t *testing.T) {
+	cert, parseErr := GetCertificateB64(testCertPem)
+
+	assert.Nil(t, parseErr, "[PEM]: Certificate parsing failed")
+
+	assert.Equal(t, subCountry, cert.Subject.Country[0], "[PEM]: They should be equal")
+	assert.Equal(t, subOrganization, cert.Subject.Organization[0], "[PEM]: They should be equal")
+	assert.Equal(t, subCommonName, cert.Subject.CommonName, "[PEM]: They should be equal")
+
+	cert, parseErr = GetCertificateB64(testCertDER)
+	assert.Nil(t, parseErr, "[DER]: Certificate parsing failed")
+	assert.Equal(t, "lokks.io", cert.Subject.CommonName, "[PEM]: They should be equal")
 }
