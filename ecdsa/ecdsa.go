@@ -12,6 +12,18 @@ import (
 
 // TODO: write log
 
+func DoSign(msg []byte, sk interface{}) ([]byte, error) {
+	r, s, err := ecdsa.Sign(rand.Reader, sk.(*ecdsa.PrivateKey), msg)
+	if err != nil {
+		return nil, err
+	}
+
+	signature := r.Bytes()
+	signature = append(signature, s.Bytes()...)
+
+	return signature, nil
+}
+
 func Sign(msg []byte, skPem, pass string) ([]byte, error) {
 	var privateKey *ecdsa.PrivateKey
 	var err error
@@ -22,15 +34,7 @@ func Sign(msg []byte, skPem, pass string) ([]byte, error) {
 		return nil, err
 	}
 
-	r, s, err := ecdsa.Sign(rand.Reader, privateKey, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	signature := r.Bytes()
-	signature = append(signature, s.Bytes()...)
-
-	return signature, nil
+	return DoSign(msg, privateKey)
 }
 
 func Verify(msg, sigBytes []byte, certPem string) bool {
