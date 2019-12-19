@@ -148,7 +148,7 @@ func TestCrypto_SignVerifyNoPasswordCase_Fail_WrongPem(t *testing.T) {
 
 // 19.12.11: lokks307/pkcs8로 변경 후 테스트 통과 확인
 func TestCrypto_CaseOfPassword(t *testing.T) {
-	signature, err := Sign([]byte(testMsg), testSkPass, "password")
+	signature, err := Sign([]byte(testMsg), testSkPass, testPassword)
 	assert.Nil(t, err, "Signature generation failed")
 
 	success := Verify([]byte(testMsg), signature, testPassCert)
