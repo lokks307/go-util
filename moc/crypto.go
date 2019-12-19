@@ -3,7 +3,6 @@ package moc
 import (
 	"crypto"
 	"crypto/ecdsa"
-	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -93,8 +92,8 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 		r, s, err = ecdsa.Sign(rng, key.(*ecdsa.PrivateKey), hashed[:])
 		signature = r.Bytes()
 		signature = append(signature, s.Bytes()...)
-	case ed25519.PrivateKey:
-		signature = ed25519.Sign(key.(ed25519.PrivateKey), msg)
+	// case ed25519.PrivateKey:
+	// 	signature = ed25519.Sign(key.(ed25519.PrivateKey), msg)
 	default:
 		signature = nil
 		err = errors.New("Unsupported type of crypto method")
@@ -142,8 +141,8 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 
 		result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), hashed[:], r, s)
 
-	case ed25519.PublicKey:
-		result = ed25519.Verify(publicKey.(ed25519.PublicKey), msg, sigBytes)
+	// case ed25519.PublicKey:
+	// 	result = ed25519.Verify(publicKey.(ed25519.PublicKey), msg, sigBytes)
 	default:
 		result = false
 	}
