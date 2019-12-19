@@ -86,7 +86,7 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 
 	switch key.(type) {
 	case *rsa.PrivateKey:
-		signature, err = rsa.SignPKCS1v15(rng, key.(*rsa.PrivateKey), crypto.SHA256, hashed[:])
+		signature, err = rsa.SignPSS(rng, key.(*rsa.PrivateKey), crypto.SHA256, hashed[:], nil)
 	case *ecdsa.PrivateKey:
 		var r *big.Int
 		var s *big.Int
@@ -126,7 +126,7 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 
 	switch publicKey.(type) {
 	case *rsa.PublicKey:
-		err := rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA256, hashed[:], sigBytes)
+		err := rsa.VerifyPSS(publicKey.(*rsa.PublicKey), crypto.SHA256, hashed[:], sigBytes, nil)
 		if err != nil {
 			result = false
 		} else {
