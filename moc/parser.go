@@ -59,7 +59,12 @@ func ParseDataToDer(dataB64 string, pswd ...string) []byte {
 	var resDer []byte
 	var err error
 
-	resDer, err = ParsePemToDer(dataB64, pswd[0])
+	if len(pswd) == 1 {
+		resDer, err = ParsePemToDer(dataB64, pswd[0])
+	} else {
+		resDer, err = ParsePemToDer(dataB64)
+	}
+	
 
 	if err == nil { // ... pem이다!
 		return resDer

@@ -122,9 +122,10 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 
 	var result bool
 
+	hashed := sha256.Sum256(msg)
+
 	switch publicKey.(type) {
 	case *rsa.PublicKey:
-		hashed := sha256.Sum256(msg)
 		err := rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA256, hashed[:], sigBytes)
 		if err != nil {
 			result = false
@@ -139,7 +140,7 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 		s := new(big.Int)
 		s.SetBytes(sigBytes[halfSigLen:])
 
-		result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), msg, r, s)
+		result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), hashed[:], r, s)
 
 	case ed25519.PublicKey:
 		result = ed25519.Verify(publicKey.(ed25519.PublicKey), msg, sigBytes)
