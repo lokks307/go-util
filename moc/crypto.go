@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/lokks307/pkcs8"
@@ -91,8 +92,22 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 		var r *big.Int
 		var s *big.Int
 		r, s, err = ecdsa.Sign(rng, key.(*ecdsa.PrivateKey), hashed[:])
-		signature = r.Bytes()
-		signature = append(signature, s.Bytes()...)
+		fmt.Println(len(r.Bytes()))
+		var rBigIntRaw []byte
+		var sBigIntRaw []byte
+		if len(r.Bytes()) < 32 { // FIXME: what if we have to support other eliptical curve like P-192, P-521?
+			for i := 0; i < 32-len(r.Bytes()); i++ {
+				rBigIntRaw[i] = 0x00
+			}
+		}
+		rBigIntRaw = append(rBigIntRaw, r.Bytes()...)
+		if len(s.Bytes()) < 32 {
+			for i := 0; i < 32-len(s.Bytes()); i++ {
+				sBigIntRaw[i] = 0x00
+			}
+		}
+		sBigIntRaw = append(sBigIntRaw, s.Bytes()...)
+		signature = append(rBigIntRaw, sBigIntRaw...)
 	case ed25519.PrivateKey:
 		signature = ed25519.Sign(key.(ed25519.PrivateKey), msg)
 	default:
