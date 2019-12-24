@@ -8,6 +8,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/asn1"
 	"errors"
 	"math/big"
 
@@ -91,8 +92,21 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 		var r *big.Int
 		var s *big.Int
 		r, s, err = ecdsa.Sign(rng, key.(*ecdsa.PrivateKey), hashed[:])
-		signature = r.Bytes()
-		signature = append(signature, s.Bytes()...)
+		var rBigIntRaw []byte
+		var sBigIntRaw []byte
+		if len(r.Bytes()) < 32 { // FIXME: what if we have to support other eliptical curve like P-192, P-521?
+			for i := 0; i < 32-len(r.Bytes()); i++ {
+				rBigIntRaw[i] = 0x00
+			}
+		}
+		rBigIntRaw = append(rBigIntRaw, r.Bytes()...)
+		if len(s.Bytes()) < 32 {
+			for i := 0; i < 32-len(s.Bytes()); i++ {
+				sBigIntRaw[i] = 0x00
+			}
+		}
+		sBigIntRaw = append(sBigIntRaw, s.Bytes()...)
+		signature = append(rBigIntRaw, sBigIntRaw...)
 	case ed25519.PrivateKey:
 		signature = ed25519.Sign(key.(ed25519.PrivateKey), msg)
 	default:
@@ -133,15 +147,26 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 			result = true
 		}
 	case *ecdsa.PublicKey:
-		halfSigLen := len(sigBytes) / 2
-		r := new(big.Int)
-		r.SetBytes(sigBytes[:halfSigLen])
+		if len(sigBytes) > 64 { // signature in DER format
+			var ecdsaInts []*big.Int
 
-		s := new(big.Int)
-		s.SetBytes(sigBytes[halfSigLen:])
+			_, err := asn1.Unmarshal(sigBytes, &ecdsaInts)
 
-		result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), hashed[:], r, s)
+			if err != nil {
+				return false
+			}
 
+			result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), hashed[:], ecdsaInts[0], ecdsaInts[1])
+		} else {
+			halfSigLen := len(sigBytes) / 2
+			r := new(big.Int)
+			r.SetBytes(sigBytes[:halfSigLen])
+
+			s := new(big.Int)
+			s.SetBytes(sigBytes[halfSigLen:])
+
+			result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), hashed[:], r, s)
+		}
 	case ed25519.PublicKey:
 		result = ed25519.Verify(publicKey.(ed25519.PublicKey), msg, sigBytes)
 	default:
