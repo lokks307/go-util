@@ -2,8 +2,11 @@ package moc
 
 import (
 	go_ecdsa "crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	go_rsa "crypto/rsa"
+	"encoding/base64"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -91,6 +94,23 @@ ATAjBgNVHSMEHDAagBhotF3YEXygRwDJeHGwycYHbLIuRZDs6DUwCgYIKoZIzj0E
 AwIDRwAwRAIgZCNKWjire6lkJvQvmOhpKwM9fJZn5ViJZEQyRP2q6MMCIAGtHn2j
 69zpemNZ7LusM3bqgB4gt+0kabQgAAHsoSDd
 -----END CERTIFICATE-----`
+
+	testEddsaKey = `-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEIE9Lop/DzZRuESo5HwOnDRJg9vbkA3Rvxmlj6nslg5ed
+-----END PRIVATE KEY-----`
+
+	testEddsaCert = `-----BEGIN CERTIFICATE-----
+MIIBoDCCAVICAQEwBQYDK2VwMHwxCzAJBgNVBAYTAktSMRAwDgYDVQQIDAdJbmNo
+ZW9uMRMwEQYDVQQHDApOYW1kb25nLWd1MRUwEwYDVQQKDAxMb2trczMwNyBJbmMx
+HDAaBgNVBAsME1Jlc2VhcmNoIERlcGFydG1lbnQxETAPBgNVBAMMCGxva2tzLmlv
+MB4XDTE5MTIyNDAyMjcwMloXDTIwMTIyMzAyMjcwMlowfDELMAkGA1UEBhMCS1Ix
+EDAOBgNVBAgMB0luY2hlb24xEzARBgNVBAcMCk5hbWRvbmctZ3UxFTATBgNVBAoM
+DExva2tzMzA3IEluYzEcMBoGA1UECwwTUmVzZWFyY2ggRGVwYXJ0bWVudDERMA8G
+A1UEAwwIbG9ra3MuaW8wKjAFBgMrZXADIQD0kOHvErHEs8TWNdDcSRMrhcQ4e030
+OBQTq25a7o4dRTAFBgMrZXADQQDPwoEv9CjuL/OsQBi4lww0E6xnMz+kowcxFBU+
+P8Csa5gLeiD2d9TY2oaNXW2QgfIULZ2mrwHtM+RIioJ39GcE
+-----END CERTIFICATE-----`
+
 	testPfxCertSubject = "CN=lokks.io,OU=Research department,O=Lokks307 Inc.,L=Incheon,ST=Some-State,C=KR"
 
 	testMsg = "Hello ecdsa"
@@ -152,5 +172,19 @@ func TestCrypto_CaseOfPassword(t *testing.T) {
 	assert.Nil(t, err, "Signature generation failed")
 
 	success := Verify([]byte(testMsg), signature, testPassCert)
+	assert.True(t, success, "Verification must succeed.")
+}
+
+func TestCrypto_EddsaSignature(t *testing.T) {
+	key, err := GetPrivateKey(testEddsaKey, "")
+	assert.Nil(t, err, "Private key parsing failed")
+	assert.IsType(t, ed25519.PrivateKey{}, key, "Type must be ed25519.PrivateKey")
+
+	signature, err := Sign([]byte(testMsg), testEddsaKey, "")
+	assert.Nil(t, err, "Signature generation failed")
+
+	fmt.Println(base64.StdEncoding.EncodeToString(signature))
+
+	success := Verify([]byte(testMsg), signature, testEddsaCert)
 	assert.True(t, success, "Verification must succeed.")
 }
