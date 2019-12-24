@@ -85,13 +85,13 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 	hashed := sha256.Sum256(msg)
 	err = nil
 
-	switch key.(type) {
+	switch privKey := key.(type) {
 	case *rsa.PrivateKey:
-		signature, err = rsa.SignPSS(rng, key.(*rsa.PrivateKey), crypto.SHA256, hashed[:], nil)
+		signature, err = rsa.SignPSS(rng, privKey, crypto.SHA256, hashed[:], nil)
 	case *ecdsa.PrivateKey:
 		var r *big.Int
 		var s *big.Int
-		r, s, err = ecdsa.Sign(rng, key.(*ecdsa.PrivateKey), hashed[:])
+		r, s, err = ecdsa.Sign(rng, privKey, hashed[:])
 		var rBigIntRaw []byte
 		var sBigIntRaw []byte
 		if len(r.Bytes()) < 32 { // FIXME: what if we have to support other eliptical curve like P-192, P-521?
@@ -108,7 +108,7 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 		sBigIntRaw = append(sBigIntRaw, s.Bytes()...)
 		signature = append(rBigIntRaw, sBigIntRaw...)
 	case ed25519.PrivateKey:
-		signature = ed25519.Sign(key.(ed25519.PrivateKey), msg)
+		signature = ed25519.Sign(privKey, msg)
 	default:
 		signature = nil
 		err = errors.New("Unsupported type of crypto method")
@@ -138,9 +138,9 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 
 	hashed := sha256.Sum256(msg)
 
-	switch publicKey.(type) {
+	switch pubKey := publicKey.(type) {
 	case *rsa.PublicKey:
-		err := rsa.VerifyPSS(publicKey.(*rsa.PublicKey), crypto.SHA256, hashed[:], sigBytes, nil)
+		err := rsa.VerifyPSS(pubKey, crypto.SHA256, hashed[:], sigBytes, nil)
 		if err != nil {
 			result = false
 		} else {
@@ -156,7 +156,7 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 				return false
 			}
 
-			result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), hashed[:], ecdsaInts[0], ecdsaInts[1])
+			result = ecdsa.Verify(pubKey, hashed[:], ecdsaInts[0], ecdsaInts[1])
 		} else {
 			halfSigLen := len(sigBytes) / 2
 			r := new(big.Int)
@@ -165,10 +165,10 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 			s := new(big.Int)
 			s.SetBytes(sigBytes[halfSigLen:])
 
-			result = ecdsa.Verify(publicKey.(*ecdsa.PublicKey), hashed[:], r, s)
+			result = ecdsa.Verify(pubKey, hashed[:], r, s)
 		}
 	case ed25519.PublicKey:
-		result = ed25519.Verify(publicKey.(ed25519.PublicKey), msg, sigBytes)
+		result = ed25519.Verify(pubKey, msg, sigBytes)
 	default:
 		result = false
 	}

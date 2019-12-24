@@ -33,7 +33,6 @@ func ParsePemToDer(pemStr string, pswd ...string) ([]byte, error) {
 
 	var result []byte
 	var decryptErr error
-	decryptErr = nil
 
 	if x509.IsEncryptedPEMBlock(pemBlock) { // pem could be encrypted
 		if len(pswd) < 1 {
@@ -64,7 +63,6 @@ func ParseDataToDer(dataB64 string, pswd ...string) []byte {
 	} else {
 		resDer, err = ParsePemToDer(dataB64)
 	}
-	
 
 	if err == nil { // ... pem이다!
 		return resDer

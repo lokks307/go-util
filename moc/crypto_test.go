@@ -7,7 +7,6 @@ import (
 	go_rsa "crypto/rsa"
 	"encoding/base64"
 	"fmt"
-	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -188,11 +187,6 @@ func TestCrypto_EddsaSignature(t *testing.T) {
 
 	success := Verify([]byte(testMsg), signature, testEddsaCert)
 	assert.True(t, success, "Verification must succeed.")
-}
-
-type ECDSA struct {
-	RBigInt *big.Int
-	SBigInt *big.Int
 }
 
 func TestCrypto_Asn1(t *testing.T) {
