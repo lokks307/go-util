@@ -7,6 +7,7 @@ import (
 	go_rsa "crypto/rsa"
 	"encoding/base64"
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -186,5 +187,19 @@ func TestCrypto_EddsaSignature(t *testing.T) {
 	fmt.Println(base64.StdEncoding.EncodeToString(signature))
 
 	success := Verify([]byte(testMsg), signature, testEddsaCert)
+	assert.True(t, success, "Verification must succeed.")
+}
+
+type ECDSA struct {
+	RBigInt *big.Int
+	SBigInt *big.Int
+}
+
+func TestCrypto_Asn1(t *testing.T) {
+	var ecdsaDerSigB64 = "MEYCIQCbciuwShp4Sm8RLQQXwziLDM5yYY/H75cp9V6O0AZSBAIhAPuZXfxRGJSWZzN5kfV0QnZ7/Qn34UKwZJyRv/qVmmrW"
+	sigRaw, parseErr := base64.StdEncoding.DecodeString(ecdsaDerSigB64)
+	assert.Nil(t, parseErr, "Signature parsing failed")
+
+	success := Verify([]byte(testMsg), sigRaw, testNoPassCert)
 	assert.True(t, success, "Verification must succeed.")
 }
