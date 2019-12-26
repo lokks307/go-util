@@ -141,7 +141,7 @@ func DoVerify(msg, sigBytes []byte, publicKey interface{}) bool {
 
 	switch pubKey := publicKey.(type) {
 	case *rsa.PublicKey:
-		err := VerifyRSASign(hashed[:], sigBytes, pubKey)
+		err := VerifyRSASign(hashed[:], sigBytes, pubKey, "pss")
 		if err != nil {
 			result = false
 		} else {
