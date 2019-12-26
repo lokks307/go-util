@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/asn1"
+	"encoding/hex"
 	"errors"
 	"math/big"
 
@@ -72,7 +73,13 @@ func GetPublicKey(dataB64 string) (public interface{}, err error) {
 	cert, parseErr := GetCertificate(dataB64)
 
 	if parseErr != nil {
-		return nil, parseErr
+		dataRaw := ParseDataToDer(dataB64)
+		pubKey, err := x509.ParsePKIXPublicKey(dataRaw)
+
+		if err != nil {
+			return nil, err
+		}
+		return pubKey, nil
 	}
 
 	return cert.PublicKey, nil
@@ -127,20 +134,14 @@ func Sign(msg []byte, skeyPem, pass string) ([]byte, error) {
 	return DoSign(msg, privateKey)
 }
 
-func Verify(msg, sigBytes []byte, certPem string) bool {
-	publicKey, err := GetPublicKey(certPem)
-
-	if err != nil {
-		return false
-	}
-
+func DoVerify(msg, sigBytes []byte, publicKey interface{}) bool {
 	var result bool
 
 	hashed := sha256.Sum256(msg)
 
 	switch pubKey := publicKey.(type) {
 	case *rsa.PublicKey:
-		err := rsa.VerifyPSS(pubKey, crypto.SHA256, hashed[:], sigBytes, nil)
+		err := VerifyRSASign(hashed[:], sigBytes, pubKey, "pss")
 		if err != nil {
 			result = false
 		} else {
@@ -174,4 +175,44 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 	}
 
 	return result
+}
+
+func Verify(msg, sigBytes []byte, certPem string) bool {
+	publicKey, err := GetPublicKey(certPem)
+
+	if err != nil {
+		return false
+	}
+
+	return DoVerify(msg, sigBytes, publicKey)
+}
+
+func VerifyFromHexPubKey(msg, sigBytes []byte, hexStr string) bool {
+	derRaw, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return false
+	}
+
+	cert, certErr := x509.ParseCertificate(derRaw)
+	if certErr != nil {
+		pubKey, pubErr := x509.ParsePKIXPublicKey(derRaw)
+		if pubErr != nil {
+			return false
+		}
+		return DoVerify(msg, sigBytes, pubKey)
+	}
+	return DoVerify(msg, sigBytes, cert.PublicKey)
+}
+
+func VerifyRSASign(hashMsgRaw, signRaw []byte, rsaPubKey *rsa.PublicKey, mode string) error {
+	var err error
+	err = nil
+
+	if len(mode) == 0 || mode == "pkcs1v15" { // default
+		err = rsa.VerifyPKCS1v15(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw)
+	} else if mode == "pss" {
+		err = rsa.VerifyPSS(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw, nil)
+	}
+
+	return err
 }
