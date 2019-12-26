@@ -72,7 +72,13 @@ func GetPublicKey(dataB64 string) (public interface{}, err error) {
 	cert, parseErr := GetCertificate(dataB64)
 
 	if parseErr != nil {
-		return nil, parseErr
+		dataRaw := ParseDataToDer(dataB64)
+		pubKey, err := x509.ParsePKIXPublicKey(dataRaw)
+
+		if err != nil {
+			return nil, err
+		}
+		return pubKey, nil
 	}
 
 	return cert.PublicKey, nil

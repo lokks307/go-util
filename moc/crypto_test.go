@@ -111,6 +111,13 @@ OBQTq25a7o4dRTAFBgMrZXADQQDPwoEv9CjuL/OsQBi4lww0E6xnMz+kowcxFBU+
 P8Csa5gLeiD2d9TY2oaNXW2QgfIULZ2mrwHtM+RIioJ39GcE
 -----END CERTIFICATE-----`
 
+	testRsaPubKey = `-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDpO4CPuo0fXRM0U/fiNoxhLbKK
+0leUIJIqUnFGlj0Zn0id+19pp/naiC33SHsffFomTnKp5RS4HIwhcZUC3io09sNG
+b8af0UZpFKKkblmN6Zl921GcIs2Ttcqfq8ZpfeVT4kC+1NqhsfuTiTzBth5+mFSh
+7gkC/IS/y2BNwMksKQIDAQAB
+-----END PUBLIC KEY-----`
+
 	testPfxCertSubject = "CN=lokks.io,OU=Research department,O=Lokks307 Inc.,L=Incheon,ST=Some-State,C=KR"
 
 	testMsg = "Hello ecdsa"
@@ -196,4 +203,10 @@ func TestCrypto_Asn1(t *testing.T) {
 
 	success := Verify([]byte(testMsg), sigRaw, testNoPassCert)
 	assert.True(t, success, "Verification must succeed.")
+}
+
+func TestCrypto_ParsePubKey(t *testing.T) {
+	pubKey, err := GetPublicKey(testRsaPubKey)
+	assert.Nil(t, err, "Key must be parsed")
+	assert.IsType(t, &rsa.PublicKey{}, pubKey, "Type should be *rsa.PublicKey")
 }
