@@ -187,7 +187,7 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 	return DoVerify(msg, sigBytes, publicKey)
 }
 
-func VerifyHex(msg, sigBytes []byte, hexStr string) bool {
+func VerifyFromHexPubKey(msg, sigBytes []byte, hexStr string) bool {
 	derRaw, err := hex.DecodeString(hexStr)
 	if err != nil {
 		return false
@@ -204,17 +204,13 @@ func VerifyHex(msg, sigBytes []byte, hexStr string) bool {
 	return DoVerify(msg, sigBytes, cert.PublicKey)
 }
 
-func VerifyRSASign(hashMsgRaw, signRaw []byte, rsaPubKey *rsa.PublicKey, mode ...int) error {
-	if len(mode) > 1 {
-		return errors.New("Invalid parameters")
-	}
-
+func VerifyRSASign(hashMsgRaw, signRaw []byte, rsaPubKey *rsa.PublicKey, mode string) error {
 	var err error
 	err = nil
 
-	if len(mode) == 0 || mode[0] == 0 { // default
+	if len(mode) == 0 || mode == "pkcs1v15" { // default
 		err = rsa.VerifyPKCS1v15(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw)
-	} else if mode[0] == 1 {
+	} else if mode == "pss" {
 		err = rsa.VerifyPSS(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw, nil)
 	}
 
