@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/asn1"
+	"encoding/hex"
 	"errors"
 	"math/big"
 
@@ -133,13 +134,7 @@ func Sign(msg []byte, skeyPem, pass string) ([]byte, error) {
 	return DoSign(msg, privateKey)
 }
 
-func Verify(msg, sigBytes []byte, certPem string) bool {
-	publicKey, err := GetPublicKey(certPem)
-
-	if err != nil {
-		return false
-	}
-
+func DoVerify(msg, sigBytes []byte, publicKey interface{}) bool {
 	var result bool
 
 	hashed := sha256.Sum256(msg)
@@ -180,4 +175,31 @@ func Verify(msg, sigBytes []byte, certPem string) bool {
 	}
 
 	return result
+}
+
+func Verify(msg, sigBytes []byte, certPem string) bool {
+	publicKey, err := GetPublicKey(certPem)
+
+	if err != nil {
+		return false
+	}
+
+	return DoVerify(msg, sigBytes, publicKey)
+}
+
+func VerifyHex(msg, sigBytes []byte, hexStr string) bool {
+	derRaw, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return false
+	}
+
+	cert, certErr := x509.ParseCertificate(derRaw)
+	if certErr != nil {
+		pubKey, pubErr := x509.ParsePKIXPublicKey(derRaw)
+		if pubErr != nil {
+			return false
+		}
+		return DoVerify(msg, sigBytes, pubKey)
+	}
+	return DoVerify(msg, sigBytes, cert.PublicKey)
 }
