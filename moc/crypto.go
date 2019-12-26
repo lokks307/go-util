@@ -141,7 +141,7 @@ func DoVerify(msg, sigBytes []byte, publicKey interface{}) bool {
 
 	switch pubKey := publicKey.(type) {
 	case *rsa.PublicKey:
-		err := rsa.VerifyPSS(pubKey, crypto.SHA256, hashed[:], sigBytes, nil)
+		err := VerifyRSASign(hashed[:], sigBytes, pubKey)
 		if err != nil {
 			result = false
 		} else {
@@ -202,4 +202,21 @@ func VerifyHex(msg, sigBytes []byte, hexStr string) bool {
 		return DoVerify(msg, sigBytes, pubKey)
 	}
 	return DoVerify(msg, sigBytes, cert.PublicKey)
+}
+
+func VerifyRSASign(hashMsgRaw, signRaw []byte, rsaPubKey *rsa.PublicKey, mode ...int) error {
+	if len(mode) > 1 {
+		return errors.New("Invalid parameters")
+	}
+
+	var err error
+	err = nil
+
+	if len(mode) == 0 || mode[0] == 0 { // default
+		err = rsa.VerifyPKCS1v15(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw)
+	} else if mode[0] == 1 {
+		err = rsa.VerifyPSS(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw, nil)
+	}
+
+	return err
 }
