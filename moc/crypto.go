@@ -69,19 +69,15 @@ func GetPrivateKey(dataB64, password string) (key interface{}, err error) {
 	return privKey, nil
 }
 
-func GetPublicKey(dataB64 string) (public interface{}, err error) {
-	cert, parseErr := GetCertificate(dataB64)
-
+func GetPublicKey(derRaw []byte) (public interface{}, err error) {
+	cert, parseErr := x509.ParseCertificate(derRaw)
 	if parseErr != nil {
-		dataRaw := ParseDataToDer(dataB64)
-		pubKey, err := x509.ParsePKIXPublicKey(dataRaw)
-
+		pubKey, err := x509.ParsePKIXPublicKey(derRaw)
 		if err != nil {
 			return nil, err
 		}
 		return pubKey, nil
 	}
-
 	return cert.PublicKey, nil
 }
 
@@ -134,51 +130,26 @@ func Sign(msg []byte, skeyPem, pass string) ([]byte, error) {
 	return DoSign(msg, privateKey)
 }
 
-func DoVerify(msg, sigBytes []byte, publicKey interface{}) bool {
-	var result bool
-
-	hashed := sha256.Sum256(msg)
+func DoVerify(msgRaw, sigRaw []byte, publicKey interface{}) bool {
 
 	switch pubKey := publicKey.(type) {
 	case *rsa.PublicKey:
-		err := VerifyRSASign(hashed[:], sigBytes, pubKey, "pss")
-		if err != nil {
-			result = false
-		} else {
-			result = true
-		}
+		return VerifySignatureRSAPSS(msgRaw, sigRaw, pubKey)
 	case *ecdsa.PublicKey:
-		if len(sigBytes) > 64 { // signature in DER format
-			var ecdsaInts []*big.Int
-
-			_, err := asn1.Unmarshal(sigBytes, &ecdsaInts)
-
-			if err != nil {
-				return false
-			}
-
-			result = ecdsa.Verify(pubKey, hashed[:], ecdsaInts[0], ecdsaInts[1])
-		} else {
-			halfSigLen := len(sigBytes) / 2
-			r := new(big.Int)
-			r.SetBytes(sigBytes[:halfSigLen])
-
-			s := new(big.Int)
-			s.SetBytes(sigBytes[halfSigLen:])
-
-			result = ecdsa.Verify(pubKey, hashed[:], r, s)
-		}
+		return VerifySignatureECDSA(msgRaw, sigRaw, pubKey)
 	case ed25519.PublicKey:
-		result = ed25519.Verify(pubKey, msg, sigBytes)
+		return VerifySignatureEDDSA(msgRaw, sigRaw, pubKey)
 	default:
-		result = false
+		return false
 	}
-
-	return result
 }
 
 func Verify(msg, sigBytes []byte, certPem string) bool {
-	publicKey, err := GetPublicKey(certPem)
+	derRaw, err := ParsePemToDer(certPem)
+	if err != nil {
+		return false
+	}
+	publicKey, err := GetPublicKey(derRaw)
 
 	if err != nil {
 		return false
@@ -204,15 +175,72 @@ func VerifyFromHexPubKey(msg, sigBytes []byte, hexStr string) bool {
 	return DoVerify(msg, sigBytes, cert.PublicKey)
 }
 
-func VerifyRSASign(hashMsgRaw, signRaw []byte, rsaPubKey *rsa.PublicKey, mode string) error {
-	var err error
-	err = nil
-
-	if len(mode) == 0 || mode == "pkcs1v15" { // default
-		err = rsa.VerifyPKCS1v15(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw)
-	} else if mode == "pss" {
-		err = rsa.VerifyPSS(rsaPubKey, crypto.SHA256, hashMsgRaw, signRaw, nil)
+func VerifySignatureEDDSA(msgRaw, sigRaw []byte, pubKey interface{}) bool {
+	edKey, ok := pubKey.(ed25519.PublicKey)
+	if !ok {
+		return false
 	}
 
-	return err
+	return ed25519.Verify(edKey, msgRaw, sigRaw)
+}
+
+func VerifySignatureECDSA(msgRaw, sigRaw []byte, pubKey interface{}) bool {
+	ecKey, ok := pubKey.(*ecdsa.PublicKey)
+	if !ok {
+		return false
+	}
+
+	hashed := sha256.Sum256(msgRaw)
+
+	if len(sigRaw) > 64 { // signature in DER format
+		var ecdsaInts []*big.Int
+
+		_, err := asn1.Unmarshal(sigRaw, &ecdsaInts)
+
+		if err != nil {
+			return false
+		}
+
+		return ecdsa.Verify(ecKey, hashed[:], ecdsaInts[0], ecdsaInts[1])
+	} else {
+		halfSigLen := len(sigRaw) / 2
+		r := new(big.Int)
+		r.SetBytes(sigRaw[:halfSigLen])
+
+		s := new(big.Int)
+		s.SetBytes(sigRaw[halfSigLen:])
+
+		return ecdsa.Verify(ecKey, hashed[:], r, s)
+	}
+}
+
+func VerifySignatureRSAPSS(msgRaw, sigRaw []byte, pubKey interface{}) bool {
+	rsaKey, ok := pubKey.(*rsa.PublicKey)
+	if !ok {
+		return false
+	}
+
+	pssOpts := rsa.PSSOptions{SaltLength: 20, Hash: 0}
+	hashed := sha256.Sum256(msgRaw)
+	err := rsa.VerifyPSS(rsaKey, crypto.SHA256, hashed[:], sigRaw, &pssOpts)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func VerifySignatureRSAPKCS1(msgRaw, sigRaw []byte, pubKey interface{}) bool {
+	rsaKey, ok := pubKey.(*rsa.PublicKey)
+	if !ok {
+		return false
+	}
+
+	hashed := sha256.Sum256(msgRaw)
+	err := rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, hashed[:], sigRaw)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
 }
