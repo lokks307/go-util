@@ -3,6 +3,7 @@ package moc
 import (
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
@@ -79,4 +80,12 @@ func ParseDataToDer(dataB64 string, pswd ...string) []byte {
 	}
 
 	return derBytes
+}
+
+func ParseHexToDer(hexStr string) []byte {
+	decoded, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return nil
+	}
+	return decoded
 }
