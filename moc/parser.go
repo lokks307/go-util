@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const PemBeginPhrase = "-----BEGIN "
+
 func DecodePEM(pemData string) (*pem.Block, error) {
 	r := strings.NewReader(pemData)
 
@@ -53,33 +55,32 @@ func ParsePemToDer(pemStr string, pswd ...string) ([]byte, error) {
 // Parse certificate formatted in PEM or DER
 func ParseDataToDer(dataB64 string, pswd ...string) []byte {
 	if len(pswd) > 1 {
-		return nil
+		return nil // 비번이 2개 이상?!
 	}
 
 	var resDer []byte
 	var err error
 
-	if len(pswd) == 1 {
-		resDer, err = ParsePemToDer(dataB64, pswd[0])
-	} else {
-		resDer, err = ParsePemToDer(dataB64)
+	if dataB64[0:11] == PemBeginPhrase { // this file is PEM format
+
+		if len(pswd) == 1 {
+			resDer, err = ParsePemToDer(dataB64, pswd[0])
+		} else {
+			resDer, err = ParsePemToDer(dataB64)
+		}
+	} else { // It is not PEM format. Probably base encoded DER format
+		// WARN: encrypted DER is not supported
+		dataB64 = strings.ReplaceAll(dataB64, "\n", "")
+		dataB64 = strings.ReplaceAll(dataB64, "\r", "")
+
+		resDer, err = base64.StdEncoding.DecodeString(dataB64)
 	}
 
-	if err == nil { // ... pem이다!
-		return resDer
-	}
-
-	// It is not PEM format. Probably base encoded DER format
-	// TODO: How to check DER is encrypted? Is decryption necessary?
-	dataB64 = strings.ReplaceAll(dataB64, "\n", "")
-	dataB64 = strings.ReplaceAll(dataB64, "\r", "")
-
-	derBytes, decodeErr := base64.StdEncoding.DecodeString(dataB64)
-	if decodeErr != nil { // cannot be decoded as base64, it could be corrupted data
+	if err != nil {
 		return nil
 	}
 
-	return derBytes
+	return resDer
 }
 
 func ParseHexToDer(hexStr string) []byte {
