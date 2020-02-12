@@ -222,9 +222,9 @@ func VerifySignatureRSAPSS(msgRaw, sigRaw []byte, pubKey interface{}) bool {
 		return false
 	}
 
-	pssOpts := rsa.PSSOptions{SaltLength: 20, Hash: 0}
+	// pssOpts := rsa.PSSOptions{SaltLength: 20, Hash: 0}
 	hashed := sha256.Sum256(msgRaw)
-	err := rsa.VerifyPSS(rsaKey, crypto.SHA256, hashed[:], sigRaw, &pssOpts)
+	err := rsa.VerifyPSS(rsaKey, crypto.SHA256, hashed[:], sigRaw, nil)
 	if err != nil {
 		return false
 	} else {
