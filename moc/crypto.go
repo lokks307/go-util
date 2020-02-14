@@ -147,10 +147,8 @@ func DoVerify(msgRaw, sigRaw []byte, publicKey interface{}) bool {
 }
 
 func Verify(msg, sigBytes []byte, certPem string) bool {
-	derRaw, err := ParsePemToDer(certPem)
-	if err != nil {
-		return false
-	}
+	derRaw := ParseDataToDer(certPem)
+
 	publicKey, err := GetPublicKey(derRaw)
 
 	if err != nil {
