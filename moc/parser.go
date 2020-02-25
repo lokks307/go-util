@@ -11,6 +11,32 @@ import (
 )
 
 const PemBeginPhrase = "-----BEGIN "
+const BeginPhraseCertificate = "-----BEGIN CERTIFICATE-----"
+
+func GetCertificateOrPublicKey(dataB64 string) (interface{}, error) {
+	if BeginPhraseCertificate == dataB64[0:27] { // this is PEM certificate
+		pBlock, _ := pem.Decode([]byte(dataB64))
+		if cert, err := x509.ParseCertificate(pBlock.Bytes); err == nil {
+			return cert, nil
+		}
+		return nil, errors.New("Cannot decode PEM certificate")
+	}
+
+	dataRaw, err := base64.StdEncoding.DecodeString(dataB64)
+	if err != nil { // wrong encoded data
+		return nil, errors.New("Cannot decode Base64 format")
+	}
+
+	if cert, err := x509.ParseCertificate(dataRaw); err == nil {
+		return cert, nil
+	}
+
+	if pubKey, err := x509.ParsePKIXPublicKey(dataRaw); err == nil {
+		return pubKey, nil
+	}
+
+	return nil, errors.New("Cannot parse data to x509 or public key")
+}
 
 func DecodePEM(pemData string) (*pem.Block, error) {
 	r := strings.NewReader(pemData)
