@@ -22,6 +22,10 @@ import (
 const BeginPhraseCertificate = "-----BEGIN CERTIFICATE-----"
 
 func GetCertificateOrPublicKey(dataB64 string) (interface{}, error) {
+	if dataB64 == "" {
+		return nil, errors.New("Empty input")
+	}
+
 	if BeginPhraseCertificate == dataB64[0:27] { // this is PEM certificate
 		if pBlock, err := DecodePEM(dataB64); err == nil {
 			if cert, err := x509.ParseCertificate(pBlock.Bytes); err == nil {
