@@ -206,8 +206,7 @@ func TestCrypto_Asn1(t *testing.T) {
 }
 
 func TestCrypto_ParsePubKey(t *testing.T) {
-	derRaw, err := ParsePemToDer(testRsaPubKey)
-	pubKey, err := GetPublicKey(derRaw)
+	pubKey, err := GetPublicKey(testRsaPubKey)
 	assert.Nil(t, err, "Key must be parsed")
 	assert.IsType(t, &rsa.PublicKey{}, pubKey, "Type should be *rsa.PublicKey")
 }

@@ -19,6 +19,37 @@ import (
 
 // MOdern Cryptography library for TethysCore
 
+const BeginPhraseCertificate = "-----BEGIN CERTIFICATE-----"
+
+func GetCertificateOrPublicKey(dataB64 string) (interface{}, error) {
+	if BeginPhraseCertificate == dataB64[0:27] { // this is PEM certificate
+		if pBlock, err := DecodePEM(dataB64); err == nil {
+			if cert, err := x509.ParseCertificate(pBlock.Bytes); err == nil {
+				return cert, nil
+			} else {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+
+	dataRaw := ParseDataToDer(dataB64)
+	if dataRaw == nil { // wrong encoded data
+		return nil, errors.New("Cannot decode Base64 format")
+	}
+
+	if cert, err := x509.ParseCertificate(dataRaw); err == nil {
+		return cert, nil
+	}
+
+	if pubKey, err := x509.ParsePKIXPublicKey(dataRaw); err == nil {
+		return pubKey, nil
+	}
+
+	return nil, errors.New("Cannot parse data to x509 or public key")
+}
+
 func GetCertificate(dataB64 string) (*x509.Certificate, error) {
 	data := ParseDataToDer(dataB64)
 
@@ -26,7 +57,6 @@ func GetCertificate(dataB64 string) (*x509.Certificate, error) {
 		return nil, errors.New("Can't decode data")
 	}
 
-	var cert *x509.Certificate
 	cert, parseErr := x509.ParseCertificate(data)
 
 	if parseErr != nil {
@@ -69,16 +99,18 @@ func GetPrivateKey(dataB64, password string) (key interface{}, err error) {
 	return privKey, nil
 }
 
-func GetPublicKey(derRaw []byte) (public interface{}, err error) {
-	cert, parseErr := x509.ParseCertificate(derRaw)
-	if parseErr != nil {
-		pubKey, err := x509.ParsePKIXPublicKey(derRaw)
-		if err != nil {
-			return nil, err
-		}
-		return pubKey, nil
+func GetPublicKey(dataB64 string) (public interface{}, err error) {
+	outItf, err := GetCertificateOrPublicKey(dataB64)
+	if err != nil {
+		return nil, err
 	}
-	return cert.PublicKey, nil
+
+	switch output := outItf.(type) {
+	case *x509.Certificate:
+		return output.PublicKey, nil
+	default:
+		return output, nil
+	}
 }
 
 func DoSign(msg []byte, key interface{}) ([]byte, error) {
@@ -147,9 +179,7 @@ func DoVerify(msgRaw, sigRaw []byte, publicKey interface{}) bool {
 }
 
 func Verify(msg, sigBytes []byte, certPem string) bool {
-	derRaw := ParseDataToDer(certPem)
-
-	publicKey, err := GetPublicKey(derRaw)
+	publicKey, err := GetPublicKey(certPem)
 
 	if err != nil {
 		return false
