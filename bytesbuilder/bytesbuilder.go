@@ -39,6 +39,16 @@ func (builder *ByteBuilder) Append(data interface{}) {
 		byteData = append(byteData, t)
 	case []uint8: // == []byte
 		byteData = t
+	case int16, uint16:
+		var v uint16
+		if reflect.TypeOf(t).Kind() == reflect.Int16 {
+			v = uint16(t.(int16))
+		} else {
+			v = t.(uint16)
+		}
+		b := make([]byte, 2)
+		binary.BigEndian.PutUint16(b, v)
+		byteData = b
 	case int32, uint32:
 		var v uint32
 		if reflect.TypeOf(t).Kind() == reflect.Int32 {
