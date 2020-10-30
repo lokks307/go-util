@@ -1,4 +1,4 @@
-module github.com/lokks307/go-util
+module github.com/lokks307-dev/go-util
 
 go 1.13
 
