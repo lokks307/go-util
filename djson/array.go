@@ -26,54 +26,35 @@ func (m *A) Insert(idx int, value interface{}) *A {
 	}
 
 	if idx == m.Size() { // back
-
-		if IsBaseType(value) {
-			m.Element = append(m.Element, value)
-			return m
-		}
-
-		switch tValue := value.(type) {
-		case *A:
-			m.Element = append(m.Element, tValue)
-		case *O:
-			m.Element = append(m.Element, tValue)
-		case A:
-			m.Element = append(m.Element, &tValue)
-		case O:
-			m.Element = append(m.Element, &tValue)
-		case map[string]interface{}:
-			m.Element = append(m.Element, ConverMapToObject(tValue))
-		case []interface{}:
-			m.Element = append(m.Element, ConvertSliceToArray(tValue))
-		case nil:
-			m.Element = append(m.Element, nil)
-		}
-
+		m.Element = append(m.Element, nil)
 	} else {
-
 		m.Element = append(m.Element[:idx+1], m.Element[idx:]...)
+	}
 
-		if IsBaseType(value) {
-			m.Element[idx] = value
-			return m
-		}
+	if IsBaseType(value) {
+		m.Element[idx] = value
+		return m
+	}
 
-		switch tValue := value.(type) {
-		case *A:
-			m.Element[idx] = tValue
-		case *O:
-			m.Element[idx] = tValue
-		case A:
-			m.Element[idx] = &tValue
-		case O:
-			m.Element[idx] = &tValue
-		case map[string]interface{}:
-			m.Element[idx] = ConverMapToObject(tValue)
-		case []interface{}:
-			m.Element[idx] = ConvertSliceToArray(tValue)
-		case nil:
-			m.Element[idx] = nil
-		}
+	switch tValue := value.(type) {
+	case *A:
+		m.Element[idx] = tValue
+	case *O:
+		m.Element[idx] = tValue
+	case A:
+		m.Element[idx] = &tValue
+	case O:
+		m.Element[idx] = &tValue
+	case map[string]interface{}:
+		m.Element[idx] = ConverMapToObject(tValue)
+	case []interface{}:
+		m.Element[idx] = ConvertSliceToArray(tValue)
+	case _Object:
+		m.Element[idx] = ConverMapToObject(tValue)
+	case _Array:
+		m.Element[idx] = ConvertSliceToArray(tValue)
+	case nil:
+		m.Element[idx] = nil
 	}
 
 	return m

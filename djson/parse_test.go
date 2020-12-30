@@ -91,3 +91,35 @@ func TestParseDJSON(t *testing.T) {
 	log.Println(bJson.GetAsInt("skills"))
 	log.Println(bJson.GetAsString())
 }
+
+func TestPutDJSON(t *testing.T) {
+	aJson := NewDJSON()
+	aJson.Put(
+		_Array{
+			_Object{
+				"name":  "Ricardo Longa",
+				"idade": 28,
+				"skills": _Array{
+					"Golang",
+					"Android",
+				},
+			},
+			_Object{
+				"name":  "Hery Victor",
+				"idade": 32,
+				"skills": _Array{
+					"Golang",
+					"Java",
+				},
+			},
+		},
+	)
+
+	bJson, ok := aJson.GetAsObject(1)
+	if !ok {
+		log.Fatal("not object")
+	}
+
+	log.Println(bJson.GetAsInt("skills"))
+	log.Println(bJson.GetAsString())
+}

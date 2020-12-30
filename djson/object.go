@@ -31,6 +31,10 @@ func (m *O) Put(key string, value interface{}) *O {
 		m.Map[key] = ConverMapToObject(t)
 	case []interface{}:
 		m.Map[key] = ConvertSliceToArray(t)
+	case _Object:
+		m.Map[key] = ConverMapToObject(t)
+	case _Array:
+		m.Map[key] = ConvertSliceToArray(t)
 	case nil:
 		m.Map[key] = t
 	}
