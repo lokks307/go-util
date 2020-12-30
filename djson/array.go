@@ -60,10 +60,19 @@ func (m *A) Insert(idx int, value interface{}) *A {
 	return m
 }
 
-func (m *A) Put(values ...interface{}) *A {
+func (m *A) Put(value interface{}) *A {
 
-	for idx := range values {
-		m.Insert(m.Size(), values[idx])
+	switch t := value.(type) {
+	case _Array:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []interface{}:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	default:
+		m.Insert(m.Size(), value)
 	}
 
 	return m

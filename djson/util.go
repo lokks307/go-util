@@ -2,7 +2,6 @@ package djson
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 
@@ -10,7 +9,6 @@ import (
 )
 
 func ConverMapToObject(dmap map[string]interface{}) *O {
-	log.Println("ConverMapToObject")
 	nObj := NewObject()
 	for k, v := range dmap {
 		nObj.Put(k, v)
@@ -19,7 +17,6 @@ func ConverMapToObject(dmap map[string]interface{}) *O {
 }
 
 func ConvertSliceToArray(dslice []interface{}) *A {
-	log.Println("ConvertSliceToArray")
 	nArr := NewArray()
 	nArr.Put(dslice)
 	return nArr

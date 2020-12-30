@@ -123,3 +123,25 @@ func TestPutDJSON(t *testing.T) {
 	log.Println(bJson.GetAsInt("skills"))
 	log.Println(bJson.GetAsString())
 }
+
+func TestPutDArrayDJSON(t *testing.T) {
+	aJson := NewDJSON()
+	aJson.Put(
+		_Array{
+			_Array{
+				1, 2, 3, 4,
+			},
+			_Array{
+				5, 6, 7, 8,
+			},
+		},
+	)
+
+	bJson, ok := aJson.GetAsArray(1)
+	if !ok {
+		log.Fatal("not array")
+	}
+
+	log.Println(bJson.GetAsInt(1))
+	log.Println(bJson.GetAsString())
+}
