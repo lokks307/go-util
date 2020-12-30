@@ -1,115 +1,212 @@
 package djson
 
-import (
-	"errors"
-	"fmt"
-	"reflect"
-)
+import "encoding/json"
 
-type A []interface{}
-
-func Array() *A {
-	return &A{make([]interface{}, 0)}
+type A struct {
+	Element []interface{}
 }
 
-func (this *A) PushBack(values interface{}) *A {
-	return this.Put(values)
+func NewArray() *A {
+	return &A{
+		Element: make([]interface{}, 0),
+	}
 }
 
-func (this *A) PushFront(values interface{}) *A {
-	return this.Insert(0, values)
+func (m *A) PushBack(values interface{}) *A {
+	return m.Insert(m.Size(), values)
 }
 
-func (this *A) Put(values ...interface{}) *A {
-	fmt.Println("Array.Put() - ", reflect.TypeOf(values[0]).String(), values[0])
-	*this = append((*this), values...)
-	fmt.Println((*this))
-	return this
+func (m *A) PushFront(values interface{}) *A {
+	return m.Insert(0, values)
 }
 
-func (this *A) Indent() string {
-	return indent((*this))
-}
-
-func (this *A) String() string {
-	return _string((*this))
-}
-
-func (this *A) Size() int {
-	return len((*this))
-}
-
-func (this *A) Length() int {
-	return len((*this))
-}
-
-func (this *A) Remove(idx int) *A {
-	if idx >= (*this).Size() || idx < 0 {
-		return this
+func (m *A) Insert(idx int, value interface{}) *A {
+	if idx > m.Size() || idx < 0 {
+		return m
 	}
 
-	(*this) = append((*this)[:idx], (*this)[idx+1:]...)
-	return this
-}
+	if idx == m.Size() { // back
 
-func (this *A) Insert(idx int, value interface{}) *A {
-	if idx > (*this).Size() || idx < 0 {
-		return this
+		if IsBaseType(value) {
+			m.Element = append(m.Element, value)
+			return m
+		}
+
+		switch tValue := value.(type) {
+		case *A:
+			m.Element = append(m.Element, tValue)
+		case *O:
+			m.Element = append(m.Element, tValue)
+		case A:
+			m.Element = append(m.Element, &tValue)
+		case O:
+			m.Element = append(m.Element, &tValue)
+		case map[string]interface{}:
+			m.Element = append(m.Element, ConverMapToObject(tValue))
+		case []interface{}:
+			m.Element = append(m.Element, ConvertSliceToArray(tValue))
+		case nil:
+			m.Element = append(m.Element, nil)
+		}
+
+	} else {
+
+		m.Element = append(m.Element[:idx+1], m.Element[idx:]...)
+
+		if IsBaseType(value) {
+			m.Element[idx] = value
+			return m
+		}
+
+		switch tValue := value.(type) {
+		case *A:
+			m.Element[idx] = tValue
+		case *O:
+			m.Element[idx] = tValue
+		case A:
+			m.Element[idx] = &tValue
+		case O:
+			m.Element[idx] = &tValue
+		case map[string]interface{}:
+			m.Element[idx] = ConverMapToObject(tValue)
+		case []interface{}:
+			m.Element[idx] = ConvertSliceToArray(tValue)
+		case nil:
+			m.Element[idx] = nil
+		}
 	}
 
-	(*this) = append((*this)[:idx+1], (*this)[idx:]...)
-	(*this)[idx] = value
-	return this
+	return m
 }
 
-func (this *A) Get(idx int) interface{} {
-	if idx >= (*this).Size() || idx < 0 {
-		return nil
+func (m *A) Put(values ...interface{}) *A {
+
+	for idx := range values {
+		m.Insert(m.Size(), values[idx])
 	}
 
-	return (*this)[idx]
+	return m
 }
 
-func (this *A) GetAsObject(idx int) O {
-	if idx >= (*this).Size() || idx < 0 {
-		return nil
+func (m *A) Size() int {
+	return len(m.Element)
+}
+
+func (m *A) Length() int {
+	return len(m.Element)
+}
+
+func (m *A) Remove(idx int) *A {
+	if idx >= m.Size() || idx < 0 {
+		return m
 	}
 
-	switch t := (*this)[idx].(type) {
+	m.Element = append(m.Element[:idx], m.Element[idx+1:]...)
+	return m
+}
+
+func (m *A) Get(idx int) (interface{}, bool) {
+	if idx >= m.Size() || idx < 0 {
+		return nil, false
+	}
+
+	return m.Element[idx], true
+}
+
+func (m *A) GetAsBool(idx int) bool {
+	if idx >= m.Size() || idx < 0 {
+		return false
+	}
+
+	if boolVal, ok := getBoolBase(m.Element[idx]); ok {
+		return boolVal
+	}
+
+	return false
+}
+
+func (m *A) GetAsFloat(idx int) float64 {
+	if idx >= m.Size() || idx < 0 {
+		return 0
+	}
+
+	if floatVal, ok := getFloatBase(m.Element[idx]); ok {
+		return floatVal
+	}
+
+	return 0
+}
+
+func (m *A) GetAsInt(idx int) int64 {
+	if idx >= m.Size() || idx < 0 {
+		return 0
+	}
+
+	if intVal, ok := getIntBase(m.Element[idx]); ok {
+		return intVal
+	}
+
+	return 0
+}
+
+func (m *A) GetAsObject(idx int) (*O, bool) {
+	if idx >= m.Size() || idx < 0 {
+		return nil, false
+	}
+
+	switch t := m.Element[idx].(type) {
 	case O:
-		return t
-	case map[string]interface{}:
-		return O(t)
+		return &t, true
+	case *O:
+		return t, true
 	}
 
-	return nil
+	return nil, false
 }
 
-func (this *A) GetAsString(idx int) string {
+func (m *A) GetAsArray(idx int) (*A, bool) {
+	if idx >= m.Size() || idx < 0 {
+		return nil, false
+	}
 
-	fmt.Println("GetAsString(", idx, ")")
+	switch t := m.Element[idx].(type) {
+	case A:
+		return &t, true
+	case *A:
+		return t, true
+	}
 
-	if idx >= (*this).Size() || idx < 0 {
-		fmt.Println((*this))
+	return nil, false
+}
+
+func (m *A) GetAsString(idx int) string {
+	if idx >= m.Size() || idx < 0 {
 		return ""
 	}
 
-	str, ok := _stringBase((*this)[idx])
+	str, ok := getStringBase(m.Element[idx])
 	if !ok {
-		return "Object"
+		switch t := m.Element[idx].(type) {
+		case A:
+			return t.ToString()
+		case *A:
+			return t.ToString()
+		case O:
+			return t.ToString()
+		case *O:
+			return t.ToString()
+		}
 	}
 
 	return str
 }
 
-func (this *A) OfString() (values []string, err error) {
-	for _, value := range *this {
-		if reflect.TypeOf(value).String() != "string" {
-			return nil, errors.New(fmt.Sprintf("Value is %s, not a string.", reflect.TypeOf(value)))
-		}
+func (m *A) ToStringPretty() string {
+	jsonByte, _ := json.MarshalIndent(ConvertArrayToSlice(m), "", "   ")
+	return string(jsonByte)
+}
 
-		values = append(values, value.(string))
-	}
-
-	return values, nil
+func (m *A) ToString() string {
+	jsonByte, _ := json.Marshal(ConvertArrayToSlice(m))
+	return string(jsonByte)
 }

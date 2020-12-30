@@ -1,94 +1,144 @@
 package djson
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
+	"strings"
+
+	gov "github.com/asaskevich/govalidator"
 )
 
-func indent(v interface{}) string {
-	indent, _ := json.MarshalIndent(v, "", "   ")
-	return string(indent)
-}
+func ConverMapToObject(dmap map[string]interface{}) *O {
+	nObj := NewObject()
 
-func _string(v interface{}) string {
-	indent, _ := json.Marshal(v)
-	return string(indent)
-}
-
-func _stringBase(v interface{}) (string, bool) {
-
-	fmt.Println("_stringBase=", reflect.TypeOf(v).String())
-
-	if v == nil {
-		return "", false
+	for k, v := range dmap {
+		nObj.Put(k, v)
 	}
 
-	switch t := v.(type) {
-	case string:
-		return t, true
-	case bool:
-		return strconv.FormatBool(t), true
-	case int:
-		return strconv.FormatInt(int64(t), 10), true
-	case uint:
-		return strconv.FormatUint(uint64(t), 10), true
-	case int8:
-		return strconv.FormatInt(int64(t), 10), true
-	case uint8:
-		return strconv.FormatUint(uint64(t), 10), true
-	case int16:
-		return strconv.FormatInt(int64(t), 10), true
-	case uint16:
-		return strconv.FormatUint(uint64(t), 10), true
-	case int32:
-		return strconv.FormatInt(int64(t), 10), true
-	case uint32:
-		return strconv.FormatUint(uint64(t), 10), true
-	case int64:
-		return strconv.FormatInt(t, 10), true
-	case uint64:
-		return strconv.FormatUint(t, 10), true
-	case float32:
-		return strconv.FormatFloat(float64(t), 'f', -1, 32), true
-	case float64:
-		return strconv.FormatFloat(t, 'f', -1, 64), true
+	return nObj
+}
+
+func ConvertSliceToArray(dslice []interface{}) *A {
+	nArr := NewArray()
+	nArr.Put(dslice)
+
+	return nArr
+}
+
+func ConverObjectToMap(obj *O) map[string]interface{} {
+	wMap := make(map[string]interface{})
+
+	for k, v := range obj.Map {
+		switch t := v.(type) {
+		case A:
+			wMap[k] = ConvertArrayToSlice(&t)
+		case O:
+			wMap[k] = ConverObjectToMap(&t)
+		case *A:
+			wMap[k] = ConvertArrayToSlice(t)
+		case *O:
+			wMap[k] = ConverObjectToMap(t)
+		default:
+			wMap[k] = v
+		}
+	}
+
+	return wMap
+}
+
+func ConvertArrayToSlice(arr *A) []interface{} {
+
+	wArray := make([]interface{}, 0)
+
+	for idx := range arr.Element {
+		switch t := arr.Element[idx].(type) {
+		case A:
+			wArray = append(wArray, ConvertArrayToSlice(&t))
+		case O:
+			wArray = append(wArray, ConverObjectToMap(&t))
+		case *A:
+			wArray = append(wArray, ConvertArrayToSlice(t))
+		case *O:
+			wArray = append(wArray, ConverObjectToMap(t))
+		default:
+			wArray = append(wArray, t)
+		}
+	}
+
+	return wArray
+}
+
+func getStringBase(v interface{}) (string, bool) {
+	if v == nil {
+		return "nil", true
+	}
+
+	if IsInTypes(v, "string", "bool", "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float32", "float64") {
+		return fmt.Sprintf("%v", v), true
 	}
 
 	return "", false
 }
 
+func getBoolBase(v interface{}) (bool, bool) {
+	if IsInTypes(v, "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64") {
+		intVal, _ := gov.ToInt(v)
+		if intVal == 0 {
+			return false, true
+		}
+	}
+
+	if IsInTypes(v, "string") {
+		if strVal, ok := v.(string); ok {
+			if strings.EqualFold(strVal, "true") {
+				return true, true
+			} else if strings.EqualFold(strVal, "false") {
+				return false, true
+			}
+		}
+	}
+
+	if IsInTypes(v, "bool") {
+		if boolVal, ok := v.(bool); ok {
+			return boolVal, true
+		}
+	}
+
+	return false, false
+}
+
+func getFloatBase(v interface{}) (float64, bool) {
+	if floatVal, err := gov.ToFloat(v); err != nil {
+		return 0, false
+	} else {
+		return floatVal, true
+	}
+}
+
+func getIntBase(v interface{}) (int64, bool) {
+	if intVal, err := gov.ToInt(v); err != nil {
+		return 0, false
+	} else {
+		return intVal, true
+	}
+}
+
 func IsBaseType(v interface{}) bool {
-	switch v.(type) {
-	case string:
-		return true
-	case bool:
-		return true
-	case int:
-		return true
-	case uint:
-		return true
-	case int8:
-		return true
-	case uint8:
-		return true
-	case int16:
-		return true
-	case uint16:
-		return true
-	case int32:
-		return true
-	case uint32:
-		return true
-	case int64:
-		return true
-	case uint64:
-		return true
-	case float32:
-		return true
-	case float64:
-		return true
+	return IsInTypes(v, "string", "bool", "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float32", "float64")
+}
+
+func IsInTypes(v interface{}, types ...string) bool {
+	var vTypeStr string
+	if v == nil {
+		vTypeStr = "nil"
+	} else {
+		vTypeStr = reflect.TypeOf(v).String()
+	}
+
+	for idx := range types {
+		if vTypeStr == types[idx] {
+			return true
+		}
 	}
 
 	return false

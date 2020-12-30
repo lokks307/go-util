@@ -2,36 +2,49 @@ package djson
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 )
 
-func ParseToObject(doc string) O {
+func ParseToObject(doc string) (*O, error) {
 	var data map[string]interface{}
 
 	err := json.Unmarshal([]byte(doc), &data)
 	if err != nil {
-		fmt.Println(err)
-		return Object()
+		return nil, errors.New("not Object")
 	}
 
-	return ParseObject(data)
+	return ParseObject(data), nil
 
 }
 
-func ParseObject(data map[string]interface{}) O {
-	obj := Object()
+func ParseToArray(doc string) (*A, error) {
+	var data []interface{}
+
+	err := json.Unmarshal([]byte(doc), &data)
+	if err != nil {
+		return nil, errors.New("not Array")
+	}
+
+	return ParseArray(data), nil
+}
+
+func ParseObject(data map[string]interface{}) *O {
+	obj := NewObject()
 	for k, v := range data {
-		if IsBaseType(data[k]) {
+		if IsBaseType(v) {
+			//log.Println("ParseObject > BaseType")
 			obj.Put(k, v)
 			continue
 		}
 
-		switch t := data[k].(type) {
+		switch tValue := v.(type) {
 		case []interface{}: // Array
-			arr := ParseArray(t)
-			obj.Put(k, arr)
+			//log.Println("ParseObject > []interface{}")
+			nArr := ParseArray(tValue)
+			obj.Put(k, nArr)
 		case map[string]interface{}: // Object
-			nObj := ParseObject(t)
+			//log.Println("ParseObject > map[string]interface{}")
+			nObj := ParseObject(tValue)
 			obj.Put(k, nObj)
 		case nil: // null
 			obj.Put(k, nil)
@@ -42,20 +55,23 @@ func ParseObject(data map[string]interface{}) O {
 }
 
 func ParseArray(data []interface{}) *A {
-	arr := Array()
+	arr := NewArray()
 
 	for idx := range data {
 		if IsBaseType(data[idx]) {
+			//log.Println("ParseArray > BaseType")
 			arr.Put(data[idx])
 			continue
 		}
 
-		switch t := data[idx].(type) {
+		switch tValue := data[idx].(type) {
 		case []interface{}: // Array
-			nArr := ParseArray(t)
+			//log.Println("ParseArray > []interface{}")
+			nArr := ParseArray(tValue)
 			arr.Put(nArr)
 		case map[string]interface{}: // Object
-			nObj := ParseObject(t)
+			//log.Println("ParseArray > map[string]interface{}")
+			nObj := ParseObject(tValue)
 			arr.Put(nObj)
 		case nil: // null
 			arr.Put(nil)

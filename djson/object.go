@@ -1,146 +1,184 @@
 package djson
 
-import (
-	"errors"
-	"fmt"
-	"reflect"
-)
+import "encoding/json"
 
-type O map[string]interface{}
-
-func Object() O {
-	return make(map[string]interface{})
+type O struct {
+	Map map[string]interface{}
 }
 
-func (this O) Put(key string, value interface{}) O {
-	this[key] = value
-	return this
+func NewObject() *O {
+	return &O{
+		Map: make(map[string]interface{}),
+	}
 }
 
-func (this O) PutAsArray(key string, array ...interface{}) O {
-	newArray := Array()
-	newArray.Put(array)
-
-	this[key] = newArray
-	return this
-}
-
-func (this O) Append(obj map[string]interface{}) O {
-	for k, v := range obj {
-		this[k] = v
+func (m *O) Put(key string, value interface{}) *O {
+	if IsBaseType(value) {
+		m.Map[key] = value
+		return m
 	}
 
-	return this
+	switch t := value.(type) {
+	case O:
+		m.Map[key] = &t
+	case A:
+		m.Map[key] = &t
+	case *O:
+		m.Map[key] = t
+	case *A:
+		m.Map[key] = t
+	case map[string]interface{}:
+		m.Map[key] = ConverMapToObject(t)
+	case []interface{}:
+		m.Map[key] = ConvertSliceToArray(t)
+	case nil:
+		m.Map[key] = t
+	}
+
+	return m
 }
 
-func (this O) GetAsString(key string) string {
-	switch t := this[key].(type) {
-	case map[string]interface{}:
-		return _string(t)
-	case []interface{}:
-		return "Array"
+func (m *O) PutAsArray(key string, array ...interface{}) *O {
+	nArray := NewArray()
+	nArray.Put(array)
+	m.Map[key] = nArray
+	return m
+}
+
+func (m *O) Append(obj map[string]interface{}) *O {
+	for k, v := range obj {
+		m.Put(k, v)
+	}
+
+	return m
+}
+
+func (m *O) GetAsString(key string) string {
+	value, ok := m.Map[key]
+	if !ok {
+		return ""
+	}
+
+	switch t := value.(type) {
 	case O:
-		return t.String()
+		return t.ToString()
 	case A:
-		return t.String()
+		return t.ToString()
+	case *O:
+		return t.ToString()
+	case *A:
+		return t.ToString()
 	case nil:
 		return "null"
 	}
 
-	str, ok := _stringBase(this[key])
+	str, ok := getStringBase(m.Map[key])
 	if !ok {
-		return "Object"
+		return ""
 	}
 
 	return str
 }
 
-func (this O) Get(key string) interface{} {
-	return this[key]
+func (m *O) Get(key string) (interface{}, bool) {
+	value, ok := m.Map[key]
+	if !ok {
+		return nil, false
+	}
+
+	return value, true
 }
 
-func (this O) GetObject(key string) (value O, err error) {
-	switch t := this[key].(type) {
-	case map[string]interface{}:
-		return t, nil
+func (m *O) GetAsBool(key string) bool {
+	value, ok := m.Map[key]
+	if !ok {
+		return false
+	}
+
+	if boolVal, ok := getBoolBase(value); ok {
+		return boolVal
+	}
+
+	return false
+}
+
+func (m *O) GetAsFloat(key string) float64 {
+	value, ok := m.Map[key]
+	if !ok {
+		return 0
+	}
+
+	if floatVal, ok := getFloatBase(value); ok {
+		return floatVal
+	}
+
+	return 0
+}
+
+func (m *O) GetAsInt(key string) int64 {
+	value, ok := m.Map[key]
+	if !ok {
+		return 0
+	}
+
+	if intVal, ok := getIntBase(value); ok {
+		return intVal
+	}
+
+	return 0
+}
+
+func (m *O) GetAsObject(key string) (*O, bool) {
+	value, ok := m.Map[key]
+	if !ok {
+		return nil, false
+	}
+
+	switch t := value.(type) {
 	case O:
-		return t, nil
+		return &t, true
+	case *O:
+		return t, true
+	case **O:
+		return *t, true
 	}
 
-	return nil, errors.New(fmt.Sprintf("Casting error. Interface is %s, not jsongo.object", reflect.TypeOf(this[key])))
+	return nil, false
 }
 
-func (this O) GetArray(key string) (newArray *A, err error) {
-	newArray = Array()
+func (m *O) GetAsArray(key string) (*A, bool) {
 
-	if IsBaseType(this[key]) {
-		return nil, errors.New("Casting error. Interface is base type, not array")
+	value, ok := m.Map[key]
+	if !ok {
+		return nil, false
 	}
 
-	switch arr := this[key].(type) {
-	case []interface{}:
-		newArray.Put(arr)
-		return newArray, nil
-	case []string:
-		newArray.Put(arr)
-		return newArray, nil
-	case []bool:
-		newArray.Put(arr)
-		return newArray, nil
-	case []int:
-		newArray.Put(arr)
-		return newArray, nil
-	case []uint:
-		newArray.Put(arr)
-		return newArray, nil
-	case []int8:
-		newArray.Put(arr)
-		return newArray, nil
-	case []uint8:
-		newArray.Put(arr)
-		return newArray, nil
-	case []int16:
-		newArray.Put(arr)
-		return newArray, nil
-	case []uint16:
-		newArray.Put(arr)
-		return newArray, nil
-	case []int32:
-		newArray.Put(arr)
-		return newArray, nil
-	case []uint32:
-		newArray.Put(arr)
-		return newArray, nil
-	case []int64:
-		newArray.Put(arr)
-		return newArray, nil
-	case []uint64:
-		newArray.Put(arr)
-		return newArray, nil
-	case []float32:
-		newArray.Put(arr)
-		return newArray, nil
-	case []float64:
-		newArray.Put(arr)
-		return newArray, nil
+	switch t := value.(type) {
 	case A:
-		return &arr, nil
+		return &t, true
+	case *A:
+		return t, true
+	case **A:
+		return *t, true
 	}
 
-	return nil, errors.New(fmt.Sprintf("Casting error. Interface is %s, not jsongo.A or []interface{}", reflect.TypeOf(this[key])))
+	return nil, false
+
 }
 
-func (this O) Remove(keys ...string) O {
+func (m *O) Remove(keys ...string) *O {
 	for idx := range keys {
-		delete(this, keys[idx])
+		delete(m.Map, keys[idx])
 	}
-	return this
+	return m
 }
 
-func (this O) Indent() string {
-	return indent(this)
+func (m *O) ToStringPretty() string {
+	jsonByte, _ := json.MarshalIndent(ConverObjectToMap(m), "", "   ")
+	return string(jsonByte)
 }
 
-func (this O) String() string {
-	return _string(this)
+func (m *O) ToString() string {
+	jsonByte, _ := json.Marshal(ConverObjectToMap(m))
+	return string(jsonByte)
 }
