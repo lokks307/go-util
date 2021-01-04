@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-func ParseToObject(doc string) (*O, error) {
+func ParseToObject(doc string) (*DO, error) {
 	var data map[string]interface{}
 
 	err := json.Unmarshal([]byte(doc), &data)
@@ -17,7 +17,7 @@ func ParseToObject(doc string) (*O, error) {
 
 }
 
-func ParseToArray(doc string) (*A, error) {
+func ParseToArray(doc string) (*DA, error) {
 	var data []interface{}
 
 	err := json.Unmarshal([]byte(doc), &data)
@@ -28,7 +28,7 @@ func ParseToArray(doc string) (*A, error) {
 	return ParseArray(data), nil
 }
 
-func ParseObject(data map[string]interface{}) *O {
+func ParseObject(data map[string]interface{}) *DO {
 	obj := NewObject()
 	for k, v := range data {
 		if IsBaseType(v) {
@@ -54,7 +54,7 @@ func ParseObject(data map[string]interface{}) *O {
 	return obj
 }
 
-func ParseArray(data []interface{}) *A {
+func ParseArray(data []interface{}) *DA {
 	arr := NewArray()
 
 	for idx := range data {

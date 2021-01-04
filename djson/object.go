@@ -2,39 +2,41 @@ package djson
 
 import "encoding/json"
 
-type O struct {
+type DO struct {
 	Map map[string]interface{}
 }
 
-func NewObject() *O {
-	return &O{
+func NewObject() *DO {
+	return &DO{
 		Map: make(map[string]interface{}),
 	}
 }
 
-func (m *O) Put(key string, value interface{}) *O {
+func (m *DO) Put(key string, value interface{}) *DO {
 	if IsBaseType(value) {
 		m.Map[key] = value
 		return m
 	}
 
 	switch t := value.(type) {
-	case O:
+	case DO:
 		m.Map[key] = &t
-	case A:
+	case DA:
 		m.Map[key] = &t
-	case *O:
+	case *DO:
 		m.Map[key] = t
-	case *A:
+	case *DA:
 		m.Map[key] = t
 	case map[string]interface{}:
 		m.Map[key] = ConverMapToObject(t)
 	case []interface{}:
 		m.Map[key] = ConvertSliceToArray(t)
-	case _Object:
+	case Object:
 		m.Map[key] = ConverMapToObject(t)
-	case _Array:
+	case Array:
 		m.Map[key] = ConvertSliceToArray(t)
+	case DJSON:
+	case *DJSON:
 	case nil:
 		m.Map[key] = t
 	}
@@ -42,14 +44,14 @@ func (m *O) Put(key string, value interface{}) *O {
 	return m
 }
 
-func (m *O) PutAsArray(key string, array ...interface{}) *O {
+func (m *DO) PutAsArray(key string, array ...interface{}) *DO {
 	nArray := NewArray()
 	nArray.Put(array)
 	m.Put(key, nArray)
 	return m
 }
 
-func (m *O) Append(obj map[string]interface{}) *O {
+func (m *DO) Append(obj map[string]interface{}) *DO {
 	for k, v := range obj {
 		m.Put(k, v)
 	}
@@ -57,20 +59,20 @@ func (m *O) Append(obj map[string]interface{}) *O {
 	return m
 }
 
-func (m *O) GetAsString(key string) string {
+func (m *DO) GetAsString(key string) string {
 	value, ok := m.Map[key]
 	if !ok {
 		return ""
 	}
 
 	switch t := value.(type) {
-	case O:
+	case DO:
 		return t.ToString()
-	case A:
+	case DA:
 		return t.ToString()
-	case *O:
+	case *DO:
 		return t.ToString()
-	case *A:
+	case *DA:
 		return t.ToString()
 	case nil:
 		return "null"
@@ -84,7 +86,7 @@ func (m *O) GetAsString(key string) string {
 	return str
 }
 
-func (m *O) Get(key string) (interface{}, bool) {
+func (m *DO) Get(key string) (interface{}, bool) {
 	value, ok := m.Map[key]
 	if !ok {
 		return nil, false
@@ -93,7 +95,7 @@ func (m *O) Get(key string) (interface{}, bool) {
 	return value, true
 }
 
-func (m *O) GetAsBool(key string) bool {
+func (m *DO) GetAsBool(key string) bool {
 	value, ok := m.Map[key]
 	if !ok {
 		return false
@@ -106,7 +108,7 @@ func (m *O) GetAsBool(key string) bool {
 	return false
 }
 
-func (m *O) GetAsFloat(key string) float64 {
+func (m *DO) GetAsFloat(key string) float64 {
 	value, ok := m.Map[key]
 	if !ok {
 		return 0
@@ -119,7 +121,7 @@ func (m *O) GetAsFloat(key string) float64 {
 	return 0
 }
 
-func (m *O) GetAsInt(key string) int64 {
+func (m *DO) GetAsInt(key string) int64 {
 	value, ok := m.Map[key]
 	if !ok {
 		return 0
@@ -132,25 +134,25 @@ func (m *O) GetAsInt(key string) int64 {
 	return 0
 }
 
-func (m *O) GetAsObject(key string) (*O, bool) {
+func (m *DO) GetAsObject(key string) (*DO, bool) {
 	value, ok := m.Map[key]
 	if !ok {
 		return nil, false
 	}
 
 	switch t := value.(type) {
-	case O:
+	case DO:
 		return &t, true
-	case *O:
+	case *DO:
 		return t, true
-	case **O:
+	case **DO:
 		return *t, true
 	}
 
 	return nil, false
 }
 
-func (m *O) GetAsArray(key string) (*A, bool) {
+func (m *DO) GetAsArray(key string) (*DA, bool) {
 
 	value, ok := m.Map[key]
 	if !ok {
@@ -158,11 +160,11 @@ func (m *O) GetAsArray(key string) (*A, bool) {
 	}
 
 	switch t := value.(type) {
-	case A:
+	case DA:
 		return &t, true
-	case *A:
+	case *DA:
 		return t, true
-	case **A:
+	case **DA:
 		return *t, true
 	}
 
@@ -170,19 +172,19 @@ func (m *O) GetAsArray(key string) (*A, bool) {
 
 }
 
-func (m *O) Remove(keys ...string) *O {
+func (m *DO) Remove(keys ...string) *DO {
 	for idx := range keys {
 		delete(m.Map, keys[idx])
 	}
 	return m
 }
 
-func (m *O) ToStringPretty() string {
+func (m *DO) ToStringPretty() string {
 	jsonByte, _ := json.MarshalIndent(ConverObjectToMap(m), "", "   ")
 	return string(jsonByte)
 }
 
-func (m *O) ToString() string {
+func (m *DO) ToString() string {
 	jsonByte, _ := json.Marshal(ConverObjectToMap(m))
 	return string(jsonByte)
 }

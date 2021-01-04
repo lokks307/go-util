@@ -95,19 +95,19 @@ func TestParseDJSON(t *testing.T) {
 func TestPutDJSON(t *testing.T) {
 	aJson := NewDJSON()
 	aJson.Put(
-		_Array{
-			_Object{
+		Array{
+			Object{
 				"name":  "Ricardo Longa",
 				"idade": 28,
-				"skills": _Array{
+				"skills": Array{
 					"Golang",
 					"Android",
 				},
 			},
-			_Object{
+			Object{
 				"name":  "Hery Victor",
 				"idade": 32,
-				"skills": _Array{
+				"skills": Array{
 					"Golang",
 					"Java",
 				},
@@ -127,11 +127,11 @@ func TestPutDJSON(t *testing.T) {
 func TestPutDArrayDJSON(t *testing.T) {
 	aJson := NewDJSON()
 	aJson.Put(
-		_Array{
-			_Array{
+		Array{
+			Array{
 				1, 2, 3, 4,
 			},
-			_Array{
+			Array{
 				5, 6, 7, 8,
 			},
 		},

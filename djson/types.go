@@ -1,4 +1,4 @@
 package djson
 
-type _Object map[string]interface{}
-type _Array []interface{}
+type Object map[string]interface{}
+type Array []interface{}

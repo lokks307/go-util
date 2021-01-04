@@ -8,7 +8,7 @@ import (
 	gov "github.com/asaskevich/govalidator"
 )
 
-func ConverMapToObject(dmap map[string]interface{}) *O {
+func ConverMapToObject(dmap map[string]interface{}) *DO {
 	nObj := NewObject()
 	for k, v := range dmap {
 		nObj.Put(k, v)
@@ -16,24 +16,24 @@ func ConverMapToObject(dmap map[string]interface{}) *O {
 	return nObj
 }
 
-func ConvertSliceToArray(dslice []interface{}) *A {
+func ConvertSliceToArray(dslice []interface{}) *DA {
 	nArr := NewArray()
 	nArr.Put(dslice)
 	return nArr
 }
 
-func ConverObjectToMap(obj *O) map[string]interface{} {
+func ConverObjectToMap(obj *DO) map[string]interface{} {
 	wMap := make(map[string]interface{})
 
 	for k, v := range obj.Map {
 		switch t := v.(type) {
-		case A:
+		case DA:
 			wMap[k] = ConvertArrayToSlice(&t)
-		case O:
+		case DO:
 			wMap[k] = ConverObjectToMap(&t)
-		case *A:
+		case *DA:
 			wMap[k] = ConvertArrayToSlice(t)
-		case *O:
+		case *DO:
 			wMap[k] = ConverObjectToMap(t)
 		default:
 			wMap[k] = v
@@ -43,19 +43,19 @@ func ConverObjectToMap(obj *O) map[string]interface{} {
 	return wMap
 }
 
-func ConvertArrayToSlice(arr *A) []interface{} {
+func ConvertArrayToSlice(arr *DA) []interface{} {
 
 	wArray := make([]interface{}, 0)
 
 	for idx := range arr.Element {
 		switch t := arr.Element[idx].(type) {
-		case A:
+		case DA:
 			wArray = append(wArray, ConvertArrayToSlice(&t))
-		case O:
+		case DO:
 			wArray = append(wArray, ConverObjectToMap(&t))
-		case *A:
+		case *DA:
 			wArray = append(wArray, ConvertArrayToSlice(t))
-		case *O:
+		case *DO:
 			wArray = append(wArray, ConverObjectToMap(t))
 		default:
 			wArray = append(wArray, t)

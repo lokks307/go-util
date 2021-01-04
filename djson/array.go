@@ -2,25 +2,25 @@ package djson
 
 import "encoding/json"
 
-type A struct {
+type DA struct {
 	Element []interface{}
 }
 
-func NewArray() *A {
-	return &A{
+func NewArray() *DA {
+	return &DA{
 		Element: make([]interface{}, 0),
 	}
 }
 
-func (m *A) PushBack(values interface{}) *A {
+func (m *DA) PushBack(values interface{}) *DA {
 	return m.Insert(m.Size(), values)
 }
 
-func (m *A) PushFront(values interface{}) *A {
+func (m *DA) PushFront(values interface{}) *DA {
 	return m.Insert(0, values)
 }
 
-func (m *A) Insert(idx int, value interface{}) *A {
+func (m *DA) Insert(idx int, value interface{}) *DA {
 	if idx > m.Size() || idx < 0 {
 		return m
 	}
@@ -37,22 +37,24 @@ func (m *A) Insert(idx int, value interface{}) *A {
 	}
 
 	switch tValue := value.(type) {
-	case *A:
+	case *DA:
 		m.Element[idx] = tValue
-	case *O:
+	case *DO:
 		m.Element[idx] = tValue
-	case A:
+	case DA:
 		m.Element[idx] = &tValue
-	case O:
+	case DO:
 		m.Element[idx] = &tValue
 	case map[string]interface{}:
 		m.Element[idx] = ConverMapToObject(tValue)
 	case []interface{}:
 		m.Element[idx] = ConvertSliceToArray(tValue)
-	case _Object:
+	case Object:
 		m.Element[idx] = ConverMapToObject(tValue)
-	case _Array:
+	case Array:
 		m.Element[idx] = ConvertSliceToArray(tValue)
+	case DJSON:
+	case *DJSON:
 	case nil:
 		m.Element[idx] = nil
 	}
@@ -60,10 +62,10 @@ func (m *A) Insert(idx int, value interface{}) *A {
 	return m
 }
 
-func (m *A) Put(value interface{}) *A {
+func (m *DA) Put(value interface{}) *DA {
 
 	switch t := value.(type) {
-	case _Array:
+	case Array:
 		for idx := range t {
 			m.Insert(m.Size(), t[idx])
 		}
@@ -78,15 +80,15 @@ func (m *A) Put(value interface{}) *A {
 	return m
 }
 
-func (m *A) Size() int {
+func (m *DA) Size() int {
 	return len(m.Element)
 }
 
-func (m *A) Length() int {
+func (m *DA) Length() int {
 	return len(m.Element)
 }
 
-func (m *A) Remove(idx int) *A {
+func (m *DA) Remove(idx int) *DA {
 	if idx >= m.Size() || idx < 0 {
 		return m
 	}
@@ -95,7 +97,7 @@ func (m *A) Remove(idx int) *A {
 	return m
 }
 
-func (m *A) Get(idx int) (interface{}, bool) {
+func (m *DA) Get(idx int) (interface{}, bool) {
 	if idx >= m.Size() || idx < 0 {
 		return nil, false
 	}
@@ -103,7 +105,7 @@ func (m *A) Get(idx int) (interface{}, bool) {
 	return m.Element[idx], true
 }
 
-func (m *A) GetAsBool(idx int) bool {
+func (m *DA) GetAsBool(idx int) bool {
 	if idx >= m.Size() || idx < 0 {
 		return false
 	}
@@ -115,7 +117,7 @@ func (m *A) GetAsBool(idx int) bool {
 	return false
 }
 
-func (m *A) GetAsFloat(idx int) float64 {
+func (m *DA) GetAsFloat(idx int) float64 {
 	if idx >= m.Size() || idx < 0 {
 		return 0
 	}
@@ -127,7 +129,7 @@ func (m *A) GetAsFloat(idx int) float64 {
 	return 0
 }
 
-func (m *A) GetAsInt(idx int) int64 {
+func (m *DA) GetAsInt(idx int) int64 {
 	if idx >= m.Size() || idx < 0 {
 		return 0
 	}
@@ -139,37 +141,37 @@ func (m *A) GetAsInt(idx int) int64 {
 	return 0
 }
 
-func (m *A) GetAsObject(idx int) (*O, bool) {
+func (m *DA) GetAsObject(idx int) (*DO, bool) {
 	if idx >= m.Size() || idx < 0 {
 		return nil, false
 	}
 
 	switch t := m.Element[idx].(type) {
-	case O:
+	case DO:
 		return &t, true
-	case *O:
+	case *DO:
 		return t, true
 	}
 
 	return nil, false
 }
 
-func (m *A) GetAsArray(idx int) (*A, bool) {
+func (m *DA) GetAsArray(idx int) (*DA, bool) {
 	if idx >= m.Size() || idx < 0 {
 		return nil, false
 	}
 
 	switch t := m.Element[idx].(type) {
-	case A:
+	case DA:
 		return &t, true
-	case *A:
+	case *DA:
 		return t, true
 	}
 
 	return nil, false
 }
 
-func (m *A) GetAsString(idx int) string {
+func (m *DA) GetAsString(idx int) string {
 	if idx >= m.Size() || idx < 0 {
 		return ""
 	}
@@ -177,13 +179,13 @@ func (m *A) GetAsString(idx int) string {
 	str, ok := getStringBase(m.Element[idx])
 	if !ok {
 		switch t := m.Element[idx].(type) {
-		case A:
+		case DA:
 			return t.ToString()
-		case *A:
+		case *DA:
 			return t.ToString()
-		case O:
+		case DO:
 			return t.ToString()
-		case *O:
+		case *DO:
 			return t.ToString()
 		}
 	}
@@ -191,12 +193,12 @@ func (m *A) GetAsString(idx int) string {
 	return str
 }
 
-func (m *A) ToStringPretty() string {
+func (m *DA) ToStringPretty() string {
 	jsonByte, _ := json.MarshalIndent(ConvertArrayToSlice(m), "", "   ")
 	return string(jsonByte)
 }
 
-func (m *A) ToString() string {
+func (m *DA) ToString() string {
 	jsonByte, _ := json.Marshal(ConvertArrayToSlice(m))
 	return string(jsonByte)
 }

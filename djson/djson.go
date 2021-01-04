@@ -18,8 +18,8 @@ const (
 )
 
 type DJSON struct {
-	Object   *O
-	Array    *A
+	Object   *DO
+	Array    *DA
 	String   string
 	Int      int64
 	Float    float64
@@ -111,12 +111,14 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 	case []interface{}:
 		m.Array = ConvertSliceToArray(t)
 		m.JsonType = JSON_ARRAY
-	case _Object:
+	case Object:
 		m.Object = ConverMapToObject(t)
 		m.JsonType = JSON_OBJECT
-	case _Array:
+	case Array:
 		m.Array = ConvertSliceToArray(t)
 		m.JsonType = JSON_ARRAY
+	case DJSON:
+		m = &t
 	}
 
 	return m
@@ -217,16 +219,16 @@ func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
 		case float64:
 			r.Float = t
 			r.JsonType = JSON_FLOAT
-		case A:
+		case DA:
 			r.Array = &t
 			r.JsonType = JSON_ARRAY
-		case O:
+		case DO:
 			r.Object = &t
 			r.JsonType = JSON_OBJECT
-		case *A:
+		case *DA:
 			r.Array = t
 			r.JsonType = JSON_ARRAY
-		case *O:
+		case *DO:
 			r.Object = t
 			r.JsonType = JSON_OBJECT
 		default:
@@ -250,7 +252,7 @@ func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 	} else {
 
 		var ok bool
-		var nObj *O
+		var nObj *DO
 
 		switch tkey := key[0].(type) {
 		case string:
@@ -292,7 +294,7 @@ func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 	} else {
 
 		var ok bool
-		var nArr *A
+		var nArr *DA
 
 		switch tkey := key[0].(type) {
 		case string:
