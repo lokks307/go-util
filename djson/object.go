@@ -45,7 +45,7 @@ func (m *O) Put(key string, value interface{}) *O {
 func (m *O) PutAsArray(key string, array ...interface{}) *O {
 	nArray := NewArray()
 	nArray.Put(array)
-	m.Map[key] = nArray
+	m.Put(key, nArray)
 	return m
 }
 

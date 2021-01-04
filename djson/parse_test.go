@@ -137,7 +137,7 @@ func TestPutDArrayDJSON(t *testing.T) {
 		},
 	)
 
-	bJson, ok := aJson.GetAsArray(1)
+	bJson, ok := aJson.Get(1)
 	if !ok {
 		log.Fatal("not array")
 	}
