@@ -1,6 +1,7 @@
 package djson
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -230,6 +231,8 @@ func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
 			return nil, false
 		}
 
+		eVal := reflect.ValueOf(element)
+
 		switch t := element.(type) {
 		case nil:
 			r.JsonType = JSON_NULL
@@ -239,41 +242,14 @@ func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
 		case bool:
 			r.Bool = t
 			r.JsonType = JSON_BOOL
-		case uint8:
-			r.Int = int64(t)
+		case uint8, uint16, uint32, uint64, uint:
+			r.Int = int64(eVal.Uint())
 			r.JsonType = JSON_INT
-		case int8:
-			r.Int = int64(t)
+		case int8, int16, int32, int64, int:
+			r.Int = eVal.Int()
 			r.JsonType = JSON_INT
-		case uint16:
-			r.Int = int64(t)
-			r.JsonType = JSON_INT
-		case int16:
-			r.Int = int64(t)
-			r.JsonType = JSON_INT
-		case uint32:
-			r.Int = int64(t)
-			r.JsonType = JSON_INT
-		case int32:
-			r.Int = int64(t)
-			r.JsonType = JSON_INT
-		case uint64:
-			r.Int = int64(t)
-			r.JsonType = JSON_INT
-		case int64:
-			r.Int = t
-			r.JsonType = JSON_INT
-		case uint:
-			r.Int = int64(t)
-			r.JsonType = JSON_INT
-		case int:
-			r.Int = int64(t)
-			r.JsonType = JSON_INT
-		case float32:
-			r.Float = float64(t)
-			r.JsonType = JSON_FLOAT
-		case float64:
-			r.Float = t
+		case float32, float64:
+			r.Float = eVal.Float()
 			r.JsonType = JSON_FLOAT
 		case DA:
 			r.Array = &t
