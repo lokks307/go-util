@@ -3,6 +3,7 @@ module github.com/lokks307-dev/go-util
 go 1.13
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/lokks307/pkcs8 v0.0.0-20191211023012-cfc7eaf96ee1
 	github.com/sirupsen/logrus v1.7.0
