@@ -36,9 +36,11 @@ func (m *DO) Put(key string, value interface{}) *DO {
 	case Array:
 		m.Map[key] = ConvertSliceToArray(t)
 	case DJSON:
+		m.Map[key] = t.GetRaw()
 	case *DJSON:
+		m.Map[key] = t.GetRaw()
 	case nil:
-		m.Map[key] = t
+		m.Map[key] = nil
 	}
 
 	return m
@@ -57,6 +59,11 @@ func (m *DO) Append(obj map[string]interface{}) *DO {
 	}
 
 	return m
+}
+
+func (m *DO) HasKey(key string) bool {
+	_, ok := m.Map[key]
+	return ok
 }
 
 func (m *DO) GetAsString(key string) string {

@@ -36,25 +36,27 @@ func (m *DA) Insert(idx int, value interface{}) *DA {
 		return m
 	}
 
-	switch tValue := value.(type) {
+	switch t := value.(type) {
 	case *DA:
-		m.Element[idx] = tValue
+		m.Element[idx] = t
 	case *DO:
-		m.Element[idx] = tValue
+		m.Element[idx] = t
 	case DA:
-		m.Element[idx] = &tValue
+		m.Element[idx] = &t
 	case DO:
-		m.Element[idx] = &tValue
+		m.Element[idx] = &t
 	case map[string]interface{}:
-		m.Element[idx] = ConverMapToObject(tValue)
+		m.Element[idx] = ConverMapToObject(t)
 	case []interface{}:
-		m.Element[idx] = ConvertSliceToArray(tValue)
+		m.Element[idx] = ConvertSliceToArray(t)
 	case Object:
-		m.Element[idx] = ConverMapToObject(tValue)
+		m.Element[idx] = ConverMapToObject(t)
 	case Array:
-		m.Element[idx] = ConvertSliceToArray(tValue)
+		m.Element[idx] = ConvertSliceToArray(t)
 	case DJSON:
+		m.Element[idx] = t.GetRaw()
 	case *DJSON:
+		m.Element[idx] = t.GetRaw()
 	case nil:
 		m.Element[idx] = nil
 	}

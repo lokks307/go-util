@@ -150,6 +150,62 @@ func (m *DJSON) PutAsObject(key string, value interface{}) *DJSON {
 	return m
 }
 
+func (m *DJSON) GetRaw(key ...interface{}) interface{} {
+	if len(key) == 0 {
+		switch m.JsonType {
+		case JSON_NULL:
+			return nil
+		case JSON_STRING:
+			return m.String
+		case JSON_BOOL:
+			return m.Bool
+		case JSON_INT:
+			return m.Int
+		case JSON_FLOAT:
+			return m.Float
+		case JSON_OBJECT:
+			return m.Object
+		case JSON_ARRAY:
+			return m.Array
+		}
+
+		return nil
+	} else {
+
+		switch tkey := key[0].(type) {
+		case string:
+			if m.JsonType == JSON_OBJECT {
+				if obj, ok := m.Object.Get(tkey); ok {
+					return obj
+				}
+			}
+		case int:
+			if m.JsonType == JSON_ARRAY {
+				if arr, ok := m.Array.Get(tkey); ok {
+					return arr
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *DJSON) HasKey(key interface{}) bool {
+	switch tkey := key.(type) {
+	case string:
+		if m.JsonType == JSON_OBJECT {
+			return m.Object.HasKey(tkey)
+		}
+	case int:
+		if m.JsonType == JSON_ARRAY {
+			return tkey >= 0 && m.Array.Size() > tkey
+		}
+	}
+
+	return false
+}
+
 func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
 	if len(key) == 0 {
 		return m, true
