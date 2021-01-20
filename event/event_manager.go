@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const modNameEvt = "[EvtMan] "
+const mNameEvt = "[EvtMan] "
 
 type AEvent struct {
 	Type     string
@@ -114,13 +114,13 @@ func (m *EventManager) RemoveSubscribe(skey string) {
 func (m *EventManager) Run() error {
 
 	if m.stage == STAGE_NULL || m.stage == STAGE_READY {
-		log.Error(modNameEvt, ERROR_EVT_FAIL_RUN)
+		log.Error(mNameEvt, ERROR_EVT_FAIL_RUN)
 		return ERROR_EVT_FAIL_RUN
 	}
 
 	go func() {
 
-		log.Info(modNameEvt, "started")
+		log.Info(mNameEvt, "started")
 		m.stage = STAGE_READY
 
 		defer func() {
@@ -134,7 +134,7 @@ func (m *EventManager) Run() error {
 			case <-m.cancelChan:
 				return
 			case oneEvent := <-Bus:
-				log.Info(modNameEvt, "new event type=", oneEvent.Type)
+				log.Trace(mNameEvt, "new event type=", oneEvent.Type)
 
 				for idx := range m.combiner {
 					m.combiner[idx].Listen(&oneEvent)
