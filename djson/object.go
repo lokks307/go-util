@@ -195,3 +195,11 @@ func (m *DO) ToString() string {
 	jsonByte, _ := json.Marshal(ConverObjectToMap(m))
 	return string(jsonByte)
 }
+
+func (m *DO) Length() int {
+	return len(m.Map)
+}
+
+func (m *DO) Size() int {
+	return len(m.Map)
+}

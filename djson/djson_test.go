@@ -93,8 +93,7 @@ func TestParseDJSON(t *testing.T) {
 }
 
 func TestPutDJSON(t *testing.T) {
-	aJson := NewDJSON()
-	aJson.Put(
+	aJson := NewDJSON().Put(
 		Array{
 			Object{
 				"name":  "Ricardo Longa",
@@ -122,6 +121,8 @@ func TestPutDJSON(t *testing.T) {
 
 	log.Println(bJson.GetAsInt("skills"))
 	log.Println(bJson.GetAsString())
+
+	log.Println(bJson.HasKey("name"))
 }
 
 func TestPutDArrayDJSON(t *testing.T) {
@@ -144,4 +145,40 @@ func TestPutDArrayDJSON(t *testing.T) {
 
 	log.Println(bJson.GetAsInt(1))
 	log.Println(bJson.GetAsString())
+
+	log.Println(bJson.HasKey(1))
+}
+
+func TestArrayAppendDJSON(t *testing.T) {
+	aJson := NewDJSON()
+	aJson.Put(
+		Array{
+			1, 2, 3, 4,
+		},
+	)
+	aJson.Put( // append array
+		Array{
+			5, 6, 7, 8,
+		},
+	)
+
+	log.Println(aJson.GetAsString())
+}
+
+func TestObjectAppendDJSON(t *testing.T) {
+	aJson := NewDJSON()
+	aJson.Put(
+		Object{
+			"name": "Hery Victor",
+		},
+	)
+	aJson.Put( // append
+		Object{
+			"idade": 32,
+		},
+	)
+
+	aJson.Put("not appended")
+
+	log.Println(aJson.GetAsString())
 }

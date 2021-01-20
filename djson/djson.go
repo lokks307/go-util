@@ -28,10 +28,32 @@ type DJSON struct {
 	JsonType int
 }
 
-func NewDJSON() *DJSON {
-	return &DJSON{
+func NewDJSON(v ...int) *DJSON {
+
+	dj := DJSON{
 		JsonType: JSON_NULL,
 	}
+
+	if len(v) == 1 {
+		switch v[0] {
+		case JSON_OBJECT:
+			dj.Object = NewObject()
+			dj.JsonType = JSON_OBJECT
+		case JSON_ARRAY:
+			dj.Array = NewArray()
+			dj.JsonType = JSON_ARRAY
+		case JSON_STRING:
+			dj.JsonType = JSON_STRING
+		case JSON_INT:
+			dj.JsonType = JSON_INT
+		case JSON_FLOAT:
+			dj.JsonType = JSON_FLOAT
+		case JSON_BOOL:
+			dj.JsonType = JSON_BOOL
+		}
+	}
+
+	return &dj
 }
 
 func (m *DJSON) Parse(doc string) *DJSON {
@@ -83,7 +105,7 @@ func (m *DJSON) Parse(doc string) *DJSON {
 }
 
 func (m *DJSON) Put(v interface{}) *DJSON {
-	if m.JsonType != JSON_NULL || v == nil {
+	if v == nil {
 		return m
 	}
 
@@ -105,19 +127,78 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 		return m
 	}
 
+	if IsInTypes(v, "string") {
+		m.String, _ = getStringBase(v)
+		m.JsonType = JSON_STRING
+		return m
+	}
+
 	switch t := v.(type) {
 	case map[string]interface{}:
-		m.Object = ConverMapToObject(t)
-		m.JsonType = JSON_OBJECT
-	case []interface{}:
-		m.Array = ConvertSliceToArray(t)
-		m.JsonType = JSON_ARRAY
+		if m.JsonType == JSON_OBJECT {
+			for key := range t {
+				m.Object.Put(key, t[key])
+			}
+		} else {
+			m.Object = ConverMapToObject(t)
+			m.JsonType = JSON_OBJECT
+		}
 	case Object:
-		m.Object = ConverMapToObject(t)
-		m.JsonType = JSON_OBJECT
+		if m.JsonType == JSON_OBJECT {
+			for key := range map[string]interface{}(t) {
+				m.Object.Put(key, t[key])
+			}
+		} else {
+			m.Object = ConverMapToObject(t)
+			m.JsonType = JSON_OBJECT
+		}
+	case *DO:
+		if m.JsonType == JSON_OBJECT {
+			for key := range t.Map {
+				m.Object.Put(key, t.Map[key])
+			}
+		} else {
+			m.Object = t
+			m.JsonType = JSON_OBJECT
+		}
+	case DO:
+		if m.JsonType == JSON_OBJECT {
+			for key := range t.Map {
+				m.Object.Put(key, t.Map[key])
+			}
+		} else {
+			m.Object = &t
+			m.JsonType = JSON_OBJECT
+		}
+	case []interface{}:
+		if m.JsonType == JSON_ARRAY {
+			m.Array.Put(t)
+		} else {
+			m.Array = ConvertSliceToArray(t)
+			m.JsonType = JSON_ARRAY
+		}
+
 	case Array:
-		m.Array = ConvertSliceToArray(t)
-		m.JsonType = JSON_ARRAY
+		if m.JsonType == JSON_ARRAY {
+			m.Array.Put([]interface{}(t))
+		} else {
+			m.Array = ConvertSliceToArray(t)
+			m.JsonType = JSON_ARRAY
+		}
+	case *DA:
+		if m.JsonType == JSON_ARRAY {
+			m.Array.Put(t.Element)
+		} else {
+			m.Array = t
+			m.JsonType = JSON_ARRAY
+		}
+	case DA:
+		if m.JsonType == JSON_ARRAY {
+			m.Array.Put(t.Element)
+		} else {
+			m.Array = &t
+			m.JsonType = JSON_ARRAY
+		}
 	case DJSON:
 		m = &t
 	}
@@ -478,19 +559,45 @@ func (m *DJSON) GetAsString(key ...interface{}) string {
 		}
 
 	} else {
+
 		switch tkey := key[0].(type) {
 		case string:
 			if m.JsonType == JSON_OBJECT {
 				return m.Object.GetAsString(tkey)
+			} else {
+				return tkey
 			}
 		case int:
 			if m.JsonType == JSON_ARRAY {
 				return m.Array.GetAsString(tkey)
+			} else {
+				return strconv.Itoa(tkey)
 			}
 		}
+
 	}
 
 	return ""
+}
+
+func (m *DJSON) Size() int {
+	return m.Lenth()
+}
+
+func (m *DJSON) Lenth() int {
+	if m.JsonType == JSON_NULL {
+		return 0
+	}
+
+	if m.JsonType == JSON_ARRAY {
+		return m.Array.Length()
+	}
+
+	if m.JsonType == JSON_OBJECT {
+		return m.Object.Length()
+	}
+
+	return 1
 }
 
 func (m *DJSON) IsBool() bool {
@@ -523,4 +630,25 @@ func (m *DJSON) IsObject() bool {
 
 func (m *DJSON) IsArray() bool {
 	return m.JsonType == JSON_ARRAY
+}
+
+func (m *DJSON) GetType() string {
+	switch m.JsonType {
+	case JSON_NULL:
+		return "null"
+	case JSON_OBJECT:
+		return "object"
+	case JSON_ARRAY:
+		return "array"
+	case JSON_STRING:
+		return "string"
+	case JSON_INT:
+		return "int"
+	case JSON_FLOAT:
+		return "float"
+	case JSON_BOOL:
+		return "bool"
+	}
+
+	return ""
 }
