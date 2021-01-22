@@ -20,15 +20,9 @@ func (m *DA) PushFront(values interface{}) *DA {
 	return m.Insert(0, values)
 }
 
-func (m *DA) Insert(idx int, value interface{}) *DA {
-	if idx > m.Size() || idx < 0 {
+func (m *DA) ReplaceAt(idx int, value interface{}) *DA {
+	if idx >= m.Size() || idx < 0 {
 		return m
-	}
-
-	if idx == m.Size() { // back
-		m.Element = append(m.Element, nil)
-	} else {
-		m.Element = append(m.Element[:idx+1], m.Element[idx:]...)
 	}
 
 	if IsBaseType(value) {
@@ -62,6 +56,20 @@ func (m *DA) Insert(idx int, value interface{}) *DA {
 	}
 
 	return m
+}
+
+func (m *DA) Insert(idx int, value interface{}) *DA {
+	if idx > m.Size() || idx < 0 {
+		return m
+	}
+
+	if idx == m.Size() { // back
+		m.Element = append(m.Element, nil)
+	} else {
+		m.Element = append(m.Element[:idx+1], m.Element[idx:]...)
+	}
+
+	return m.ReplaceAt(idx, value)
 }
 
 func (m *DA) Put(value interface{}) *DA {

@@ -182,3 +182,35 @@ func TestObjectAppendDJSON(t *testing.T) {
 
 	log.Println(aJson.GetAsString())
 }
+
+func TestUpdateDJSON(t *testing.T) {
+	jsonDoc := `[
+		{
+			"name":"Ricardo Longa",
+			"idade":28,
+			"skills":[
+				"Golang","Android"
+			]
+		},
+		{
+			"name":"Hery Victor",
+			"idade":32,
+			"skills":[
+				"Golang",
+				"Java"
+			]
+		}
+	]`
+
+	aJson := NewDJSON().Parse(jsonDoc)
+
+	bJson, ok := aJson.GetAsObject(1)
+	if !ok {
+		log.Fatal("not object")
+	}
+	bJson.Put(Object{"hobbies": Array{"game"}})
+	_ = bJson.UpdatePath(`["hobbies"][1]`, "running")
+	_ = bJson.UpdatePath(`["hobbies"][0]`, "art")
+
+	log.Println(aJson.GetAsString())
+}

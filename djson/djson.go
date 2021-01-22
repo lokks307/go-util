@@ -2,6 +2,7 @@ package djson
 
 import (
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -26,6 +27,16 @@ type DJSON struct {
 	Float    float64
 	Bool     bool
 	JsonType int
+}
+
+var XPathRegExp *regexp.Regexp
+
+func init() {
+	var err error
+	XPathRegExp, err = regexp.Compile(`\[(\"[a-zA-Z0-9]+\"|[0-9]+)\]`)
+	if err != nil {
+		XPathRegExp = nil
+	}
 }
 
 func NewDJSON(v ...int) *DJSON {
@@ -106,29 +117,40 @@ func (m *DJSON) Parse(doc string) *DJSON {
 
 func (m *DJSON) Put(v interface{}) *DJSON {
 	if v == nil {
+		m.Array = nil
+		m.Object = nil
+		m.JsonType = JSON_NULL
 		return m
 	}
 
 	if IsInTypes(v, "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64") {
 		m.Int, _ = getIntBase(v)
+		m.Array = nil
+		m.Object = nil
 		m.JsonType = JSON_INT
 		return m
 	}
 
 	if IsInTypes(v, "float32", "float64") {
 		m.Float, _ = getFloatBase(v)
+		m.Array = nil
+		m.Object = nil
 		m.JsonType = JSON_FLOAT
 		return m
 	}
 
 	if IsInTypes(v, "bool") {
 		m.Bool, _ = getBoolBase(v)
+		m.Array = nil
+		m.Object = nil
 		m.JsonType = JSON_BOOL
 		return m
 	}
 
 	if IsInTypes(v, "string") {
 		m.String, _ = getStringBase(v)
+		m.Array = nil
+		m.Object = nil
 		m.JsonType = JSON_STRING
 		return m
 	}
@@ -141,6 +163,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			}
 		} else {
 			m.Object = ConverMapToObject(t)
+			m.Array = nil
 			m.JsonType = JSON_OBJECT
 		}
 	case Object:
@@ -150,6 +173,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			}
 		} else {
 			m.Object = ConverMapToObject(t)
+			m.Array = nil
 			m.JsonType = JSON_OBJECT
 		}
 	case *DO:
@@ -159,6 +183,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			}
 		} else {
 			m.Object = t
+			m.Array = nil
 			m.JsonType = JSON_OBJECT
 		}
 	case DO:
@@ -168,6 +193,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			}
 		} else {
 			m.Object = &t
+			m.Array = nil
 			m.JsonType = JSON_OBJECT
 		}
 	case []interface{}:
@@ -175,6 +201,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			m.Array.Put(t)
 		} else {
 			m.Array = ConvertSliceToArray(t)
+			m.Object = nil
 			m.JsonType = JSON_ARRAY
 		}
 
@@ -183,6 +210,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			m.Array.Put([]interface{}(t))
 		} else {
 			m.Array = ConvertSliceToArray(t)
+			m.Object = nil
 			m.JsonType = JSON_ARRAY
 		}
 	case *DA:
@@ -190,6 +218,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			m.Array.Put(t.Element)
 		} else {
 			m.Array = t
+			m.Object = nil
 			m.JsonType = JSON_ARRAY
 		}
 	case DA:
@@ -197,6 +226,7 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 			m.Array.Put(t.Element)
 		} else {
 			m.Array = &t
+			m.Object = nil
 			m.JsonType = JSON_ARRAY
 		}
 	case DJSON:
@@ -324,13 +354,16 @@ func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
 			r.Bool = t
 			r.JsonType = JSON_BOOL
 		case uint8, uint16, uint32, uint64, uint:
-			r.Int = int64(eVal.Uint())
+			intVal := int64(eVal.Uint())
+			r.Int = intVal
 			r.JsonType = JSON_INT
 		case int8, int16, int32, int64, int:
-			r.Int = eVal.Int()
+			intVal := eVal.Int()
+			r.Int = intVal
 			r.JsonType = JSON_INT
 		case float32, float64:
-			r.Float = eVal.Float()
+			floatVal := eVal.Float()
+			r.Float = floatVal
 			r.JsonType = JSON_FLOAT
 		case DA:
 			r.Array = &t
@@ -351,6 +384,8 @@ func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
 		return r, true
 	}
 }
+
+// The DJSON as return shared Object.
 
 func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 
@@ -393,6 +428,8 @@ func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 
 	return nil, false
 }
+
+// The DJSON as return shared Array.
 
 func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 
@@ -651,4 +688,139 @@ func (m *DJSON) GetType() string {
 	}
 
 	return ""
+}
+
+func (m *DJSON) Remove(key interface{}) *DJSON {
+	switch tkey := key.(type) {
+	case string:
+		if m.JsonType == JSON_OBJECT {
+			m.Object.Remove(tkey)
+		}
+	case int:
+		if m.JsonType == JSON_ARRAY {
+			m.Array.Remove(tkey)
+		}
+	}
+
+	return m
+}
+
+func (m *DJSON) RemovePath(path string) error {
+	return m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			da.Remove(idx)
+		},
+		func(do *DO, key string, v interface{}) {
+			do.Remove(key)
+		},
+	)
+}
+
+func (m *DJSON) UpdatePath(path string, val interface{}) error {
+	return m.doPathFunc(path, val,
+		func(da *DA, idx int, v interface{}) {
+			da.ReplaceAt(idx, v)
+		},
+		func(do *DO, key string, v interface{}) {
+			do.Put(key, v)
+		},
+	)
+}
+
+func (m *DJSON) doPathFunc(path string, val interface{},
+	arrayTaskFunc func(da *DA, idx int, v interface{}),
+	objectTaskFunc func(do *DO, key string, v interface{})) error {
+
+	if XPathRegExp == nil {
+		return unavailableError
+	}
+
+	matches := XPathRegExp.FindAllStringSubmatch(path, -1)
+
+	pathLen := len(matches)
+
+	if pathLen == 0 {
+		return invalidPathError
+	}
+
+	jsonMode := m.JsonType
+	dObject := m.Object
+	dArray := m.Array
+
+	for idx := range matches {
+
+		kstr := matches[idx][1]
+
+		kidx, err := strconv.Atoi(kstr)
+		if err != nil {
+			if strings.HasPrefix(kstr, `"`) && strings.HasSuffix(kstr, `"`) {
+				kstr = strings.TrimRight(strings.TrimLeft(kstr, `"`), `"`)
+			} else if strings.HasPrefix(kstr, `'`) && strings.HasSuffix(kstr, `'`) {
+				kstr = strings.TrimRight(strings.TrimLeft(kstr, `'`), `'`)
+			}
+
+			if jsonMode != JSON_OBJECT {
+				return invalidPathError
+			}
+
+			if dObject == nil {
+				return invalidPathError
+			}
+
+			if idx == pathLen-1 {
+				objectTaskFunc(dObject, kstr, val)
+				return nil
+			} else {
+				if _, ok := dObject.Map[kstr]; !ok {
+					return invalidPathError
+				}
+
+				switch t := dObject.Map[kstr].(type) {
+				case *DO:
+					dObject = t
+					dArray = nil
+					jsonMode = JSON_OBJECT
+				case *DA:
+					dObject = nil
+					dArray = t
+					jsonMode = JSON_ARRAY
+				default:
+					return invalidPathError
+				}
+			}
+
+		} else {
+			if jsonMode != JSON_ARRAY {
+				return invalidPathError
+			}
+
+			if dArray == nil {
+				return invalidPathError
+			}
+
+			for dArray.Size() <= kidx {
+				dArray.PushBack(0)
+			}
+
+			if idx == pathLen-1 {
+				arrayTaskFunc(dArray, kidx, val)
+				return nil
+			} else {
+				switch t := dArray.Element[kidx].(type) {
+				case *DO:
+					dObject = t
+					dArray = nil
+					jsonMode = JSON_OBJECT
+				case *DA:
+					dObject = nil
+					dArray = t
+					jsonMode = JSON_ARRAY
+				default:
+					return invalidPathError
+				}
+			}
+		}
+	}
+
+	return invalidPathError
 }
