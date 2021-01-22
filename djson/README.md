@@ -1,6 +1,6 @@
 # DJSON: Another JSON Library for who hates json.Unmarshal
 
-## 1. HOW-TO
+## 1. Basic Syntax
 
 ### 1.1. New JSON
 
@@ -78,10 +78,14 @@ mJson.Put(djson.Object{
 })
 
 mJson.Put(djson.Object{
-    "idade": 32,
+    "idade": 28,
 })
 
-fmt.Println(mJson.GetAsString()) // must be like {"name":"Hery Victor","idade":55}
+mJson.Put(djson.Object{
+    "name":"Ricardo Longa", // overwrite existing value
+})
+
+fmt.Println(mJson.GetAsString()) // must be like {"name":"Ricardo Longa","idade":28}
 ```
 
 ### 1.5. Parse existing JSON string
@@ -108,3 +112,132 @@ jsonDoc := `[
 mJson := NewDJSON().Parse(jsonDoc)
 ```
 
+### 1.6. Get values
+```go
+jsonDoc := `[
+    {
+        "name":"Ricardo Longa",
+        "idade":28,
+        "skills":[
+            "Golang","Android"
+        ]
+    }
+]`
+
+mJson := NewDJSON().Parse(jsonDoc)
+
+// must be like [{"name":"Ricardo Longa","idade":28,"skills":["Golang","Android"]}]
+fmt.Println(mJson.GetAsString()) 
+
+// must be like {"name":"Ricardo Longa","idade":28,"skills":["Golang","Android"]}
+fmt.Println(mJson.GetAsString(0)) 
+
+aJson, _ := mJson.GetAsObject(0)
+
+fmt.Println(aJson.GetAsInt("idade")) // 28
+fmt.Println(aJson.GetAsString("idade")) // 28
+
+fmt.Println(aJson.GetAsInt("name")) // 0
+fmt.Println(aJson.GetAsString("name")) // Ricardo Longa
+
+fmt.Println(aJson.GetAsString("skills")) // ["Golang","Android"]
+```
+
+## 2. Advanced Syntax
+
+### 2.1. Check if JSON has key
+
+```go
+jsonDoc := `{
+    "name":"Ricardo Longa",
+    "idade":28,
+    "skills":[
+        "Golang","Android"
+    ]
+}`
+
+mJson := NewDJSON().Parse(jsonDoc)
+aJson, _ := mJson.GetAsArray("skills")
+
+fmt.Println(mJson.HasKey("skill")) // true
+fmt.Println(aJson.Haskey(1)) // true
+
+```
+
+### 2.2. Update value via path
+
+```go
+jsonDoc := `[{
+    "name":"Ricardo Longa",
+    "idade":28,
+    "skills":[ "Golang","Android" ]
+},
+{
+    "name":"Hery Victor",
+    "idade":32,
+    "skills":[ "Golang", "Java" ]
+}]`
+
+mJson := NewDJSON().Parse(jsonDoc)
+
+_ = mJson.UpdatePath(`[1]["name"]`, djson.Object{
+    "first":  "Hery",
+    "family": "Victor",
+})
+
+// must be like
+// [{"idade":28,"name":"Ricardo Longa","skills":["Golang","Android"]},
+// {"idade":32,"name":{"family":"Victor","first":"Hery"},"skills":["Golang","Java"]}]
+fmt.Println(mJson.GetAsString()) 
+```
+
+### 2.3. Remove value via path
+
+```go
+jsonDoc := `[{
+    "name":"Ricardo Longa",
+    "idade":28,
+    "skills":[ "Golang","Android" ]
+},
+{
+    "name":"Hery Victor",
+    "idade":32,
+    "skills":[ "Golang", "Java" ]
+}]`
+
+mJson := NewDJSON().Parse(jsonDoc)
+
+_ = mJson.RemovePath(`[1]["skills"]`)
+
+// must be like
+// [{"idade":28,"name":"Ricardo Longa","skills":["Golang","Android"]},{"idade":32,"name":"Hery Victor"}]
+fmt.Println(mJson.GetAsString()) 
+```
+
+### 2.4. Manipluate value via sharing
+
+```go
+jsonDoc := `[{
+    "name":"Ricardo Longa",
+    "idade":28,
+    "skills":["Golang","Android"]
+},
+{
+    "name":"Hery Victor",
+    "idade":32,
+    "skills":["Golang","Java"]
+}]`
+
+aJson := NewDJSON().Parse(jsonDoc)
+
+bJson, _ := aJson.GetAsObject(1) // now, bJson shares *djson.DO with aJson
+
+bJson.Put(djson.Object{"hobbies": djson.Array{"game"}}) // append Array to Object
+bJson.UpdatePath(`["hobbies"][1]`, "running") // append value to Array
+bJson.UpdatePath(`["hobbies"][0]`, "art") // replace value
+
+// must be like
+// [{"idade":28,"name":"Ricardo Longa","skills":["Golang","Android"]},
+// {"hobbies":["art","running"],"idade":32,"name":"Hery Victor","skills":["Golang","Java"]}]
+fmt.Println(aJson.GetAsString())
+```
