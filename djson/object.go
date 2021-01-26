@@ -102,43 +102,69 @@ func (m *DO) Get(key string) (interface{}, bool) {
 	return value, true
 }
 
-func (m *DO) GetAsBool(key string) bool {
+func (m *DO) GetType(key string) (string, bool) {
 	value, ok := m.Map[key]
 	if !ok {
-		return false
+		return "", false
+	}
+
+	switch value.(type) {
+	case DA, *DA:
+		return "array", true
+	case DO, *DO:
+		return "object", true
+	case int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64:
+		return "int", true
+	case float32, float64:
+		return "float", true
+	case string:
+		return "string", true
+	case bool:
+		return "bool", true
+	case nil:
+		return "null", true
+	}
+
+	return "", false
+}
+
+func (m *DO) GetAsBool(key string) (bool, bool) {
+	value, ok := m.Map[key]
+	if !ok {
+		return false, false
 	}
 
 	if boolVal, ok := getBoolBase(value); ok {
-		return boolVal
+		return boolVal, true
 	}
 
-	return false
+	return false, false
 }
 
-func (m *DO) GetAsFloat(key string) float64 {
+func (m *DO) GetAsFloat(key string) (float64, bool) {
 	value, ok := m.Map[key]
 	if !ok {
-		return 0
+		return 0, false
 	}
 
 	if floatVal, ok := getFloatBase(value); ok {
-		return floatVal
+		return floatVal, true
 	}
 
-	return 0
+	return 0, false
 }
 
-func (m *DO) GetAsInt(key string) int64 {
+func (m *DO) GetAsInt(key string) (int64, bool) {
 	value, ok := m.Map[key]
 	if !ok {
-		return 0
+		return 0, false
 	}
 
 	if intVal, ok := getIntBase(value); ok {
-		return intVal
+		return intVal, true
 	}
 
-	return 0
+	return 0, false
 }
 
 func (m *DO) GetAsObject(key string) (*DO, bool) {

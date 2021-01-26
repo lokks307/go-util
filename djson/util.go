@@ -124,6 +124,22 @@ func IsBaseType(v interface{}) bool {
 	return IsInTypes(v, "string", "bool", "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float32", "float64")
 }
 
+func IsIntType(v interface{}) bool {
+	return IsInTypes(v, "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64")
+}
+
+func IsFloatType(v interface{}) bool {
+	return IsInTypes(v, "float32", "float64")
+}
+
+func IsBoolType(v interface{}) bool {
+	return IsInTypes(v, "bool")
+}
+
+func IsStringType(v interface{}) bool {
+	return IsInTypes(v, "string")
+}
+
 func IsInTypes(v interface{}, types ...string) bool {
 	var vTypeStr string
 	if v == nil {
