@@ -1,6 +1,8 @@
 package djson
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type DA struct {
 	Element []interface{}
@@ -115,40 +117,65 @@ func (m *DA) Get(idx int) (interface{}, bool) {
 	return m.Element[idx], true
 }
 
-func (m *DA) GetAsBool(idx int) bool {
+func (m *DA) GetType(idx int) (string, bool) {
 	if idx >= m.Size() || idx < 0 {
-		return false
+		return "", false
+	}
+
+	switch m.Element[idx].(type) {
+	case DA, *DA:
+		return "array", true
+	case DO, *DO:
+		return "object", true
+	case int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64:
+		return "int", true
+	case float32, float64:
+		return "float", true
+	case string:
+		return "string", true
+	case bool:
+		return "bool", true
+	case nil:
+		return "null", true
+	}
+
+	return "", false
+}
+
+func (m *DA) GetAsBool(idx int) (bool, bool) {
+	if idx >= m.Size() || idx < 0 {
+		return false, false
 	}
 
 	if boolVal, ok := getBoolBase(m.Element[idx]); ok {
-		return boolVal
+		return boolVal, true
 	}
 
-	return false
+	return false, false
 }
 
-func (m *DA) GetAsFloat(idx int) float64 {
+func (m *DA) GetAsFloat(idx int) (float64, bool) {
 	if idx >= m.Size() || idx < 0 {
-		return 0
+		return 0, false
 	}
 
 	if floatVal, ok := getFloatBase(m.Element[idx]); ok {
-		return floatVal
+		return floatVal, true
 	}
 
-	return 0
+	return 0, false
 }
 
-func (m *DA) GetAsInt(idx int) int64 {
+func (m *DA) GetAsInt(idx int) (int64, bool) {
 	if idx >= m.Size() || idx < 0 {
-		return 0
+		return 0, false
 	}
 
 	if intVal, ok := getIntBase(m.Element[idx]); ok {
-		return intVal
+		return intVal, true
 	}
 
-	return 0
+	return 0, false
 }
 
 func (m *DA) GetAsObject(idx int) (*DO, bool) {

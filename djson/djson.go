@@ -489,15 +489,35 @@ func (m *DJSON) GetAsInt(key ...interface{}) int64 {
 		}
 
 	} else {
+
+		var hasDefaultValue bool
+		var defaultValue int64
+
+		if len(key) >= 2 {
+			defaultValue, hasDefaultValue = key[1].(int64)
+		}
+
 		switch tkey := key[0].(type) {
 		case string:
 			if m.JsonType == JSON_OBJECT {
-				return m.Object.GetAsInt(tkey)
+				if m.Object.HasKey(tkey) {
+					if iVal, ok := m.Object.GetAsInt(tkey); ok {
+						return iVal
+					}
+				}
 			}
 		case int:
 			if m.JsonType == JSON_ARRAY {
-				return m.Array.GetAsInt(tkey)
+				if m.Array.Size() > tkey {
+					if iVal, ok := m.Array.GetAsInt(tkey); ok {
+						return iVal
+					}
+				}
 			}
+		}
+
+		if hasDefaultValue {
+			return defaultValue
 		}
 	}
 
@@ -521,16 +541,37 @@ func (m *DJSON) GetAsBool(key ...interface{}) bool {
 		}
 
 	} else {
+
+		var hasDefaultValue bool
+		var defaultValue bool
+
+		if len(key) >= 2 {
+			defaultValue, hasDefaultValue = key[1].(bool)
+		}
+
 		switch tkey := key[0].(type) {
 		case string:
 			if m.JsonType == JSON_OBJECT {
-				return m.Object.GetAsBool(tkey)
+
+				if m.Object.HasKey(tkey) {
+					if bVal, ok := m.Object.GetAsBool(tkey); ok {
+						return bVal
+					}
+				}
 			}
 		case int:
-			if m.JsonType == JSON_ARRAY {
-				return m.Array.GetAsBool(tkey)
+
+			if m.Array.Size() > tkey {
+				if bVal, ok := m.Array.GetAsBool(tkey); ok {
+					return bVal
+				}
 			}
 		}
+
+		if hasDefaultValue {
+			return defaultValue
+		}
+
 	}
 
 	return false
@@ -551,15 +592,37 @@ func (m *DJSON) GetAsFloat(key ...interface{}) float64 {
 		}
 
 	} else {
+
+		var hasDefaultValue bool
+		var defaultValue float64
+
+		if len(key) >= 2 {
+			defaultValue, hasDefaultValue = key[1].(float64)
+		}
+
 		switch tkey := key[0].(type) {
 		case string:
 			if m.JsonType == JSON_OBJECT {
-				return m.Object.GetAsFloat(tkey)
+
+				if m.Object.HasKey(tkey) {
+					if fVal, ok := m.Object.GetAsFloat(tkey); ok {
+						return fVal
+					}
+				}
+
 			}
 		case int:
 			if m.JsonType == JSON_ARRAY {
-				return m.Array.GetAsFloat(tkey)
+				if m.Array.Size() > tkey {
+					if fVal, ok := m.Array.GetAsFloat(tkey); ok {
+						return fVal
+					}
+				}
 			}
+		}
+
+		if hasDefaultValue {
+			return defaultValue
 		}
 	}
 
@@ -597,18 +660,37 @@ func (m *DJSON) GetAsString(key ...interface{}) string {
 
 	} else {
 
+		var hasDefaultValue bool
+		var defaultValue string
+
+		if len(key) >= 2 {
+			defaultValue, hasDefaultValue = key[1].(string)
+		}
+
 		switch tkey := key[0].(type) {
 		case string:
 			if m.JsonType == JSON_OBJECT {
-				return m.Object.GetAsString(tkey)
+				if m.Object.HasKey(tkey) {
+					return m.Object.GetAsString(tkey)
+				} else {
+					if hasDefaultValue {
+						return defaultValue
+					}
+				}
 			} else {
-				return tkey
+				return tkey // maybe default
 			}
 		case int:
 			if m.JsonType == JSON_ARRAY {
-				return m.Array.GetAsString(tkey)
+				if m.Array.Size() > tkey {
+					return m.Array.GetAsString(tkey)
+				} else {
+					if hasDefaultValue {
+						return defaultValue
+					}
+				}
 			} else {
-				return strconv.Itoa(tkey)
+				return strconv.Itoa(tkey) // maybe default
 			}
 		}
 
@@ -618,10 +700,10 @@ func (m *DJSON) GetAsString(key ...interface{}) string {
 }
 
 func (m *DJSON) Size() int {
-	return m.Lenth()
+	return m.Length()
 }
 
-func (m *DJSON) Lenth() int {
+func (m *DJSON) Length() int {
 	if m.JsonType == JSON_NULL {
 		return 0
 	}
@@ -637,57 +719,118 @@ func (m *DJSON) Lenth() int {
 	return 1
 }
 
-func (m *DJSON) IsBool() bool {
-	return m.JsonType == JSON_BOOL
-}
+func (m *DJSON) getTypeSimple(key interface{}) string {
 
-func (m *DJSON) IsInt() bool {
-	return m.JsonType == JSON_INT
-}
-
-func (m *DJSON) IsNumeric() bool {
-	return m.JsonType == JSON_FLOAT || m.JsonType == JSON_INT
-}
-
-func (m *DJSON) IsFloat() bool {
-	return m.JsonType == JSON_FLOAT
-}
-
-func (m *DJSON) IsString() bool {
-	return m.JsonType == JSON_STRING
-}
-
-func (m *DJSON) IsNull() bool {
-	return m.JsonType == JSON_NULL
-}
-
-func (m *DJSON) IsObject() bool {
-	return m.JsonType == JSON_OBJECT
-}
-
-func (m *DJSON) IsArray() bool {
-	return m.JsonType == JSON_ARRAY
-}
-
-func (m *DJSON) GetType() string {
 	switch m.JsonType {
-	case JSON_NULL:
-		return "null"
 	case JSON_OBJECT:
-		return "object"
+		if key, tok := key.(string); tok {
+			if typeStr, ok := m.Object.GetType(key); ok {
+				return typeStr
+			}
+		}
 	case JSON_ARRAY:
-		return "array"
-	case JSON_STRING:
-		return "string"
-	case JSON_INT:
-		return "int"
-	case JSON_FLOAT:
-		return "float"
-	case JSON_BOOL:
-		return "bool"
+		if idx, tok := key.(int); tok {
+			if typeStr, ok := m.Array.GetType(idx); ok {
+				return typeStr
+			}
+		}
 	}
 
 	return ""
+}
+
+func (m *DJSON) isSameType(key interface{}, inTypeStr string) bool {
+
+	return m.getTypeSimple(key) == inTypeStr
+}
+
+func (m *DJSON) IsBool(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_BOOL
+	}
+
+	return m.isSameType(key[0], "bool")
+}
+
+func (m *DJSON) IsInt(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_INT
+	}
+
+	return m.isSameType(key[0], "int")
+}
+
+func (m *DJSON) IsNumeric(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_FLOAT || m.JsonType == JSON_INT
+	}
+
+	return m.isSameType(key[0], "int") || m.isSameType(key[0], "float")
+}
+
+func (m *DJSON) IsFloat(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_FLOAT
+	}
+
+	return m.isSameType(key[0], "float")
+}
+
+func (m *DJSON) IsString(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_STRING
+	}
+
+	return m.isSameType(key[0], "string")
+}
+
+func (m *DJSON) IsNull(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_NULL
+	}
+
+	return m.isSameType(key[0], "null")
+}
+
+func (m *DJSON) IsObject(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_OBJECT
+	}
+
+	return m.isSameType(key[0], "object")
+}
+
+func (m *DJSON) IsArray(key ...interface{}) bool {
+	if len(key) == 0 {
+		return m.JsonType == JSON_ARRAY
+	}
+
+	return m.isSameType(key[0], "array")
+}
+
+func (m *DJSON) GetType(key ...interface{}) string {
+	if len(key) == 0 {
+		switch m.JsonType {
+		case JSON_NULL:
+			return "null"
+		case JSON_OBJECT:
+			return "object"
+		case JSON_ARRAY:
+			return "array"
+		case JSON_STRING:
+			return "string"
+		case JSON_INT:
+			return "int"
+		case JSON_FLOAT:
+			return "float"
+		case JSON_BOOL:
+			return "bool"
+		}
+
+		return ""
+	}
+
+	return m.getTypeSimple(key[0])
 }
 
 func (m *DJSON) Remove(key interface{}) *DJSON {
@@ -703,6 +846,21 @@ func (m *DJSON) Remove(key interface{}) *DJSON {
 	}
 
 	return m
+}
+
+func (m *DJSON) GetTypePath(path string) string {
+	var pathType string
+
+	_ = m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			pathType, _ = da.GetType(idx)
+		},
+		func(do *DO, key string, v interface{}) {
+			pathType, _ = do.GetType(key)
+		},
+	)
+
+	return pathType
 }
 
 func (m *DJSON) RemovePath(path string) error {
@@ -823,4 +981,32 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 	}
 
 	return invalidPathError
+}
+
+func (m *DJSON) AutoFields(s interface{}) {
+	target := reflect.ValueOf(s)
+	elements := target.Elem()
+
+	for i := 0; i < elements.NumField(); i++ {
+		mValue := elements.Field(i)
+		mType := elements.Type().Field(i)
+		tag := mType.Tag.Get("json")
+
+		if !mValue.CanSet() {
+			continue
+		}
+
+		switch mType.Type.String() {
+		case "int", "int8", "int16", "int32", "int64":
+			mValue.SetInt(m.GetAsInt(tag))
+		case "uint", "uint8", "uint16", "uint32", "uint64":
+			mValue.SetUint(uint64(m.GetAsInt(tag)))
+		case "float32", "float64":
+			mValue.SetFloat(m.GetAsFloat(tag))
+		case "string":
+			mValue.SetString(m.GetAsString(tag))
+		case "bool":
+			mValue.SetBool(m.GetAsBool(tag))
+		}
+	}
 }
