@@ -66,7 +66,7 @@ mJson.Put(djson.Array{
     7,8,9,
 })
 
-fmt.Println(mJson.GetAsString()) // must be [1,2,3,4,5,6,7,8,9]
+fmt.Println(mJson.ToString()) // must be [1,2,3,4,5,6,7,8,9]
 ```
 
 ```go
@@ -85,7 +85,7 @@ mJson.Put(djson.Object{
     "name":"Ricardo Longa", // overwrite existing value
 })
 
-fmt.Println(mJson.GetAsString()) // must be like {"name":"Ricardo Longa","idade":28}
+fmt.Println(mJson.ToString()) // must be like {"name":"Ricardo Longa","idade":28}
 ```
 
 ### 1.5. Parse existing JSON string
@@ -127,7 +127,7 @@ jsonDoc := `[
 mJson := NewDJSON().Parse(jsonDoc)
 
 // must be like [{"name":"Ricardo Longa","idade":28,"skills":["Golang","Android"]}]
-fmt.Println(mJson.GetAsString()) 
+fmt.Println(mJson.ToString()) 
 
 // must be like {"name":"Ricardo Longa","idade":28,"skills":["Golang","Android"]}
 fmt.Println(mJson.GetAsString(0)) 
@@ -188,7 +188,7 @@ _ = mJson.UpdatePath(`[1]["name"]`, djson.Object{
 // must be like
 // [{"idade":28,"name":"Ricardo Longa","skills":["Golang","Android"]},
 // {"idade":32,"name":{"family":"Victor","first":"Hery"},"skills":["Golang","Java"]}]
-fmt.Println(mJson.GetAsString()) 
+fmt.Println(mJson.ToString()) 
 ```
 
 ### 2.3. Remove value via path
@@ -211,7 +211,7 @@ _ = mJson.RemovePath(`[1]["skills"]`)
 
 // must be like
 // [{"idade":28,"name":"Ricardo Longa","skills":["Golang","Android"]},{"idade":32,"name":"Hery Victor"}]
-fmt.Println(mJson.GetAsString()) 
+fmt.Println(mJson.ToString()) 
 ```
 
 ### 2.4. Manipluate value via sharing
@@ -239,5 +239,21 @@ bJson.UpdatePath(`["hobbies"][0]`, "art") // replace value
 // must be like
 // [{"idade":28,"name":"Ricardo Longa","skills":["Golang","Android"]},
 // {"hobbies":["art","running"],"idade":32,"name":"Hery Victor","skills":["Golang","Java"]}]
-fmt.Println(aJson.GetAsString())
+fmt.Println(aJson.ToString())
+```
+
+
+### 2.4. Default Value
+```go
+jsonDoc := `{
+    "name":"Ricardo Longa",
+    "idade":28,
+    "skills":["Golang","Android"]
+}`
+
+mJson := NewDJSON().Parse(jsonDoc)
+
+fmt.Println(mJson.GetAsInt("idade", 10)) // must be 28
+fmt.Println(mJson.GetAsInt("name", 10)) // must be 10 because `name` field cannot be convert to integer
+fmt.Println(mJson.GetAsInt("hobbies", 10)) // must be 10 because no such field `hobbies`
 ```

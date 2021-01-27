@@ -551,7 +551,12 @@ func (m *DJSON) GetAsBool(key ...interface{}) bool {
 	if len(key) == 0 {
 
 		switch m.JsonType {
-		case JSON_NULL, JSON_FLOAT, JSON_STRING, JSON_ARRAY, JSON_OBJECT:
+		case JSON_NULL, JSON_FLOAT, JSON_ARRAY, JSON_OBJECT:
+			return false
+		case JSON_STRING:
+			if strings.EqualFold(m.String, "true") {
+				return true
+			}
 			return false
 		case JSON_INT:
 			return m.Int == 1
