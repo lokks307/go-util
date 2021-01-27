@@ -236,3 +236,25 @@ func TestAutoFieldTag(t *testing.T) {
 
 	log.Println(user)
 }
+
+func TestHandleDJSON(t *testing.T) {
+	jsonDoc := `{
+		"name":"Ricardo Longa",
+		"idade":28,
+		"skills":[
+			"Golang","Android"
+		]
+	}`
+
+	mJson := NewDJSON().Parse(jsonDoc)
+
+	aJson := NewDJSON()
+	// aJson.Put("name", mJson.GetAsInterface("name"))
+	// aJson.Put("idade", mJson.GetAsInterface("idade"))
+
+	aJson.PutAsObject("name", mJson.GetAsInterface("name"))
+	aJson.PutAsObject("idade", mJson.GetAsInterface("idade"))
+
+	log.Println(aJson.ToString())
+
+}

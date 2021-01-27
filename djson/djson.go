@@ -115,15 +115,29 @@ func (m *DJSON) Parse(doc string) *DJSON {
 	return m
 }
 
-func (m *DJSON) Put(v interface{}) *DJSON {
-	if v == nil {
+func (m *DJSON) Put(v ...interface{}) *DJSON {
+
+	if len(v) == 0 {
+		return m
+	}
+
+	if len(v) == 2 {
+
+		if key, ok := v[0].(string); ok {
+			m.PutAsObject(key, v[1])
+		}
+
+		return m
+	}
+
+	if v[0] == nil {
 		m.Array = nil
 		m.Object = nil
 		m.JsonType = JSON_NULL
 		return m
 	}
 
-	if IsInTypes(v, "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64") {
+	if IsInTypes(v[0], "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64") {
 		m.Int, _ = getIntBase(v)
 		m.Array = nil
 		m.Object = nil
@@ -131,31 +145,31 @@ func (m *DJSON) Put(v interface{}) *DJSON {
 		return m
 	}
 
-	if IsInTypes(v, "float32", "float64") {
-		m.Float, _ = getFloatBase(v)
+	if IsInTypes(v[0], "float32", "float64") {
+		m.Float, _ = getFloatBase(v[0])
 		m.Array = nil
 		m.Object = nil
 		m.JsonType = JSON_FLOAT
 		return m
 	}
 
-	if IsInTypes(v, "bool") {
-		m.Bool, _ = getBoolBase(v)
+	if IsInTypes(v[0], "bool") {
+		m.Bool, _ = getBoolBase(v[0])
 		m.Array = nil
 		m.Object = nil
 		m.JsonType = JSON_BOOL
 		return m
 	}
 
-	if IsInTypes(v, "string") {
-		m.String, _ = getStringBase(v)
+	if IsInTypes(v[0], "string") {
+		m.String, _ = getStringBase(v[0])
 		m.Array = nil
 		m.Object = nil
 		m.JsonType = JSON_STRING
 		return m
 	}
 
-	switch t := v.(type) {
+	switch t := v[0].(type) {
 	case map[string]interface{}:
 		if m.JsonType == JSON_OBJECT {
 			for key := range t {
@@ -262,7 +276,22 @@ func (m *DJSON) PutAsObject(key string, value interface{}) *DJSON {
 	return m
 }
 
-func (m *DJSON) GetRaw(key ...interface{}) interface{} {
+func (m *DJSON) Remove(key interface{}) *DJSON {
+	switch tkey := key.(type) {
+	case string:
+		if m.JsonType == JSON_OBJECT {
+			m.Object.Remove(tkey)
+		}
+	case int:
+		if m.JsonType == JSON_ARRAY {
+			m.Array.Remove(tkey)
+		}
+	}
+
+	return m
+}
+
+func (m *DJSON) GetAsInterface(key ...interface{}) interface{} {
 	if len(key) == 0 {
 		switch m.JsonType {
 		case JSON_NULL:
@@ -301,21 +330,6 @@ func (m *DJSON) GetRaw(key ...interface{}) interface{} {
 	}
 
 	return nil
-}
-
-func (m *DJSON) HasKey(key interface{}) bool {
-	switch tkey := key.(type) {
-	case string:
-		if m.JsonType == JSON_OBJECT {
-			return m.Object.HasKey(tkey)
-		}
-	case int:
-		if m.JsonType == JSON_ARRAY {
-			return tkey >= 0 && m.Array.Size() > tkey
-		}
-	}
-
-	return false
 }
 
 func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
@@ -389,7 +403,7 @@ func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
 
 func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 
-	if m.JsonType == JSON_STRING || m.JsonType == JSON_INT || m.JsonType == JSON_FLOAT {
+	if m.JsonType != JSON_OBJECT && m.JsonType != JSON_ARRAY {
 		return nil, false
 	}
 
@@ -400,16 +414,16 @@ func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 	} else {
 
 		var ok bool
-		var nObj *DO
+		var newObject *DO
 
 		switch tkey := key[0].(type) {
 		case string:
 			if m.JsonType == JSON_OBJECT {
-				nObj, ok = m.Object.GetAsObject(tkey)
+				newObject, ok = m.Object.GetAsObject(tkey)
 			}
 		case int:
 			if m.JsonType == JSON_ARRAY {
-				nObj, ok = m.Array.GetAsObject(tkey)
+				newObject, ok = m.Array.GetAsObject(tkey)
 			}
 		}
 
@@ -417,9 +431,9 @@ func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 			return nil, false
 		}
 
-		if nObj != nil {
+		if newObject != nil {
 			return &DJSON{
-				Object:   nObj,
+				Object:   newObject,
 				Array:    nil,
 				JsonType: JSON_OBJECT,
 			}, true
@@ -433,7 +447,7 @@ func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 
 func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 
-	if m.JsonType == JSON_STRING || m.JsonType == JSON_INT || m.JsonType == JSON_FLOAT {
+	if m.JsonType != JSON_OBJECT && m.JsonType != JSON_ARRAY {
 		return nil, false
 	}
 
@@ -444,16 +458,16 @@ func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 	} else {
 
 		var ok bool
-		var nArr *DA
+		var newArray *DA
 
 		switch tkey := key[0].(type) {
 		case string:
 			if m.JsonType == JSON_OBJECT {
-				nArr, ok = m.Object.GetAsArray(tkey)
+				newArray, ok = m.Object.GetAsArray(tkey)
 			}
 		case int:
 			if m.JsonType == JSON_ARRAY {
-				nArr, ok = m.Array.GetAsArray(tkey)
+				newArray, ok = m.Array.GetAsArray(tkey)
 			}
 		}
 
@@ -461,10 +475,10 @@ func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 			return nil, false
 		}
 
-		if nArr != nil {
+		if newArray != nil {
 			return &DJSON{
 				Object:   nil,
-				Array:    nArr,
+				Array:    newArray,
 				JsonType: JSON_ARRAY,
 			}, true
 		}
@@ -475,12 +489,21 @@ func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 }
 
 func (m *DJSON) GetAsInt(key ...interface{}) int64 {
+
 	if len(key) == 0 {
 
 		switch m.JsonType {
-		case JSON_NULL:
+		case JSON_ARRAY, JSON_OBJECT, JSON_NULL:
+			return 0
+		case JSON_BOOL:
+			if m.Bool {
+				return 1
+			}
 			return 0
 		case JSON_STRING:
+			if iVal, err := strconv.ParseInt(m.String, 10, 64); err == nil {
+				return iVal
+			}
 			return 0
 		case JSON_INT:
 			return m.Int
@@ -521,21 +544,17 @@ func (m *DJSON) GetAsInt(key ...interface{}) int64 {
 		}
 	}
 
-	return 0
+	return 0 // zero value
 }
 
 func (m *DJSON) GetAsBool(key ...interface{}) bool {
 	if len(key) == 0 {
 
 		switch m.JsonType {
-		case JSON_NULL:
-			return false
-		case JSON_STRING:
+		case JSON_NULL, JSON_FLOAT, JSON_STRING, JSON_ARRAY, JSON_OBJECT:
 			return false
 		case JSON_INT:
-			return false
-		case JSON_FLOAT:
-			return false
+			return m.Int == 1
 		case JSON_BOOL:
 			return m.Bool
 		}
@@ -574,16 +593,24 @@ func (m *DJSON) GetAsBool(key ...interface{}) bool {
 
 	}
 
-	return false
+	return false // zero value
 }
 
 func (m *DJSON) GetAsFloat(key ...interface{}) float64 {
 	if len(key) == 0 {
 
 		switch m.JsonType {
-		case JSON_NULL:
+		case JSON_NULL, JSON_ARRAY, JSON_OBJECT:
 			return 0
 		case JSON_STRING:
+			if fVal, err := strconv.ParseFloat(m.String, 64); err == nil {
+				return fVal
+			}
+			return 0
+		case JSON_BOOL:
+			if m.Bool {
+				return 1
+			}
 			return 0
 		case JSON_INT:
 			return float64(m.Int)
@@ -626,37 +653,14 @@ func (m *DJSON) GetAsFloat(key ...interface{}) float64 {
 		}
 	}
 
-	return 0
+	return 0 // zero value
 }
 
 func (m *DJSON) GetAsString(key ...interface{}) string {
 
 	if len(key) == 0 {
 
-		switch m.JsonType {
-		case JSON_NULL:
-			return "null"
-		case JSON_STRING:
-			return m.String
-		case JSON_INT:
-			intStr, ok := getStringBase(m.Int)
-			if !ok {
-				return ""
-			}
-			return intStr
-		case JSON_FLOAT:
-			floatStr, ok := getStringBase(m.Float)
-			if !ok {
-				return ""
-			}
-			return floatStr
-		case JSON_BOOL:
-			return gov.ToString(m.Bool)
-		case JSON_OBJECT:
-			return m.Object.ToString()
-		case JSON_ARRAY:
-			return m.Array.ToString()
-		}
+		return m.ToString()
 
 	} else {
 
@@ -696,317 +700,35 @@ func (m *DJSON) GetAsString(key ...interface{}) string {
 
 	}
 
-	return ""
+	return "" // zero value
 }
 
-func (m *DJSON) Size() int {
-	return m.Length()
-}
-
-func (m *DJSON) Length() int {
-	if m.JsonType == JSON_NULL {
-		return 0
-	}
-
-	if m.JsonType == JSON_ARRAY {
-		return m.Array.Length()
-	}
-
-	if m.JsonType == JSON_OBJECT {
-		return m.Object.Length()
-	}
-
-	return 1
-}
-
-func (m *DJSON) getTypeSimple(key interface{}) string {
+func (m *DJSON) ToString() string {
 
 	switch m.JsonType {
+	case JSON_NULL:
+		return "null"
+	case JSON_STRING:
+		return m.String
+	case JSON_INT:
+		intStr, ok := getStringBase(m.Int)
+		if !ok {
+			return ""
+		}
+		return intStr
+	case JSON_FLOAT:
+		floatStr, ok := getStringBase(m.Float)
+		if !ok {
+			return ""
+		}
+		return floatStr
+	case JSON_BOOL:
+		return gov.ToString(m.Bool)
 	case JSON_OBJECT:
-		if key, tok := key.(string); tok {
-			if typeStr, ok := m.Object.GetType(key); ok {
-				return typeStr
-			}
-		}
+		return m.Object.ToString()
 	case JSON_ARRAY:
-		if idx, tok := key.(int); tok {
-			if typeStr, ok := m.Array.GetType(idx); ok {
-				return typeStr
-			}
-		}
+		return m.Array.ToString()
 	}
 
-	return ""
-}
-
-func (m *DJSON) isSameType(key interface{}, inTypeStr string) bool {
-
-	return m.getTypeSimple(key) == inTypeStr
-}
-
-func (m *DJSON) IsBool(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_BOOL
-	}
-
-	return m.isSameType(key[0], "bool")
-}
-
-func (m *DJSON) IsInt(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_INT
-	}
-
-	return m.isSameType(key[0], "int")
-}
-
-func (m *DJSON) IsNumeric(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_FLOAT || m.JsonType == JSON_INT
-	}
-
-	return m.isSameType(key[0], "int") || m.isSameType(key[0], "float")
-}
-
-func (m *DJSON) IsFloat(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_FLOAT
-	}
-
-	return m.isSameType(key[0], "float")
-}
-
-func (m *DJSON) IsString(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_STRING
-	}
-
-	return m.isSameType(key[0], "string")
-}
-
-func (m *DJSON) IsNull(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_NULL
-	}
-
-	return m.isSameType(key[0], "null")
-}
-
-func (m *DJSON) IsObject(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_OBJECT
-	}
-
-	return m.isSameType(key[0], "object")
-}
-
-func (m *DJSON) IsArray(key ...interface{}) bool {
-	if len(key) == 0 {
-		return m.JsonType == JSON_ARRAY
-	}
-
-	return m.isSameType(key[0], "array")
-}
-
-func (m *DJSON) GetType(key ...interface{}) string {
-	if len(key) == 0 {
-		switch m.JsonType {
-		case JSON_NULL:
-			return "null"
-		case JSON_OBJECT:
-			return "object"
-		case JSON_ARRAY:
-			return "array"
-		case JSON_STRING:
-			return "string"
-		case JSON_INT:
-			return "int"
-		case JSON_FLOAT:
-			return "float"
-		case JSON_BOOL:
-			return "bool"
-		}
-
-		return ""
-	}
-
-	return m.getTypeSimple(key[0])
-}
-
-func (m *DJSON) Remove(key interface{}) *DJSON {
-	switch tkey := key.(type) {
-	case string:
-		if m.JsonType == JSON_OBJECT {
-			m.Object.Remove(tkey)
-		}
-	case int:
-		if m.JsonType == JSON_ARRAY {
-			m.Array.Remove(tkey)
-		}
-	}
-
-	return m
-}
-
-func (m *DJSON) GetTypePath(path string) string {
-	var pathType string
-
-	_ = m.doPathFunc(path, nil,
-		func(da *DA, idx int, v interface{}) {
-			pathType, _ = da.GetType(idx)
-		},
-		func(do *DO, key string, v interface{}) {
-			pathType, _ = do.GetType(key)
-		},
-	)
-
-	return pathType
-}
-
-func (m *DJSON) RemovePath(path string) error {
-	return m.doPathFunc(path, nil,
-		func(da *DA, idx int, v interface{}) {
-			da.Remove(idx)
-		},
-		func(do *DO, key string, v interface{}) {
-			do.Remove(key)
-		},
-	)
-}
-
-func (m *DJSON) UpdatePath(path string, val interface{}) error {
-	return m.doPathFunc(path, val,
-		func(da *DA, idx int, v interface{}) {
-			da.ReplaceAt(idx, v)
-		},
-		func(do *DO, key string, v interface{}) {
-			do.Put(key, v)
-		},
-	)
-}
-
-func (m *DJSON) doPathFunc(path string, val interface{},
-	arrayTaskFunc func(da *DA, idx int, v interface{}),
-	objectTaskFunc func(do *DO, key string, v interface{})) error {
-
-	if XPathRegExp == nil {
-		return unavailableError
-	}
-
-	matches := XPathRegExp.FindAllStringSubmatch(path, -1)
-
-	pathLen := len(matches)
-
-	if pathLen == 0 {
-		return invalidPathError
-	}
-
-	jsonMode := m.JsonType
-	dObject := m.Object
-	dArray := m.Array
-
-	for idx := range matches {
-
-		kstr := matches[idx][1]
-
-		kidx, err := strconv.Atoi(kstr)
-		if err != nil {
-			if strings.HasPrefix(kstr, `"`) && strings.HasSuffix(kstr, `"`) {
-				kstr = strings.TrimRight(strings.TrimLeft(kstr, `"`), `"`)
-			} else if strings.HasPrefix(kstr, `'`) && strings.HasSuffix(kstr, `'`) {
-				kstr = strings.TrimRight(strings.TrimLeft(kstr, `'`), `'`)
-			}
-
-			if jsonMode != JSON_OBJECT {
-				return invalidPathError
-			}
-
-			if dObject == nil {
-				return invalidPathError
-			}
-
-			if idx == pathLen-1 {
-				objectTaskFunc(dObject, kstr, val)
-				return nil
-			} else {
-				if _, ok := dObject.Map[kstr]; !ok {
-					return invalidPathError
-				}
-
-				switch t := dObject.Map[kstr].(type) {
-				case *DO:
-					dObject = t
-					dArray = nil
-					jsonMode = JSON_OBJECT
-				case *DA:
-					dObject = nil
-					dArray = t
-					jsonMode = JSON_ARRAY
-				default:
-					return invalidPathError
-				}
-			}
-
-		} else {
-			if jsonMode != JSON_ARRAY {
-				return invalidPathError
-			}
-
-			if dArray == nil {
-				return invalidPathError
-			}
-
-			for dArray.Size() <= kidx {
-				dArray.PushBack(0)
-			}
-
-			if idx == pathLen-1 {
-				arrayTaskFunc(dArray, kidx, val)
-				return nil
-			} else {
-				switch t := dArray.Element[kidx].(type) {
-				case *DO:
-					dObject = t
-					dArray = nil
-					jsonMode = JSON_OBJECT
-				case *DA:
-					dObject = nil
-					dArray = t
-					jsonMode = JSON_ARRAY
-				default:
-					return invalidPathError
-				}
-			}
-		}
-	}
-
-	return invalidPathError
-}
-
-func (m *DJSON) AutoFields(s interface{}) {
-	target := reflect.ValueOf(s)
-	elements := target.Elem()
-
-	for i := 0; i < elements.NumField(); i++ {
-		mValue := elements.Field(i)
-		mType := elements.Type().Field(i)
-		tag := mType.Tag.Get("json")
-
-		if !mValue.CanSet() {
-			continue
-		}
-
-		switch mType.Type.String() {
-		case "int", "int8", "int16", "int32", "int64":
-			mValue.SetInt(m.GetAsInt(tag))
-		case "uint", "uint8", "uint16", "uint32", "uint64":
-			mValue.SetUint(uint64(m.GetAsInt(tag)))
-		case "float32", "float64":
-			mValue.SetFloat(m.GetAsFloat(tag))
-		case "string":
-			mValue.SetString(m.GetAsString(tag))
-		case "bool":
-			mValue.SetBool(m.GetAsBool(tag))
-		}
-	}
+	return "" // zero value
 }

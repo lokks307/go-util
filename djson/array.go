@@ -50,9 +50,9 @@ func (m *DA) ReplaceAt(idx int, value interface{}) *DA {
 	case Array:
 		m.Element[idx] = ConvertSliceToArray(t)
 	case DJSON:
-		m.Element[idx] = t.GetRaw()
+		m.Element[idx] = t.GetAsInterface()
 	case *DJSON:
-		m.Element[idx] = t.GetRaw()
+		m.Element[idx] = t.GetAsInterface()
 	case nil:
 		m.Element[idx] = nil
 	}
@@ -213,21 +213,45 @@ func (m *DA) GetAsString(idx int) string {
 		return ""
 	}
 
-	str, ok := getStringBase(m.Element[idx])
-	if !ok {
-		switch t := m.Element[idx].(type) {
-		case DA:
-			return t.ToString()
-		case *DA:
-			return t.ToString()
-		case DO:
-			return t.ToString()
-		case *DO:
-			return t.ToString()
-		}
+	switch t := m.Element[idx].(type) {
+	case DA:
+		return t.ToString()
+	case *DA:
+		return t.ToString()
+	case DO:
+		return t.ToString()
+	case *DO:
+		return t.ToString()
+	case nil:
+		return "null"
 	}
 
-	return str
+	if str, ok := getStringBase(m.Element[idx]); ok {
+		return str
+	}
+
+	return ""
+}
+
+func (m *DA) GetAsString2(idx int) (string, bool) {
+	if idx >= m.Size() || idx < 0 {
+		return "", false
+	}
+
+	switch t := m.Element[idx].(type) {
+	case DA:
+		return t.ToString(), true
+	case *DA:
+		return t.ToString(), true
+	case DO:
+		return t.ToString(), true
+	case *DO:
+		return t.ToString(), true
+	case nil:
+		return "null", true
+	}
+
+	return getStringBase(m.Element[idx])
 }
 
 func (m *DA) ToStringPretty() string {
