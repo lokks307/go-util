@@ -36,9 +36,9 @@ func (m *DO) Put(key string, value interface{}) *DO {
 	case Array:
 		m.Map[key] = ConvertSliceToArray(t)
 	case DJSON:
-		m.Map[key] = t.GetRaw()
+		m.Map[key] = t.GetAsInterface()
 	case *DJSON:
-		m.Map[key] = t.GetRaw()
+		m.Map[key] = t.GetAsInterface()
 	case nil:
 		m.Map[key] = nil
 	}
@@ -85,12 +85,33 @@ func (m *DO) GetAsString(key string) string {
 		return "null"
 	}
 
-	str, ok := getStringBase(m.Map[key])
-	if !ok {
-		return ""
+	if str, ok := getStringBase(m.Map[key]); ok {
+		return str
 	}
 
-	return str
+	return ""
+}
+
+func (m *DO) GetAsString2(key string) (string, bool) {
+	value, ok := m.Map[key]
+	if !ok {
+		return "", false
+	}
+
+	switch t := value.(type) {
+	case DO:
+		return t.ToString(), true
+	case DA:
+		return t.ToString(), true
+	case *DO:
+		return t.ToString(), true
+	case *DA:
+		return t.ToString(), true
+	case nil:
+		return "null", true
+	}
+
+	return getStringBase(m.Map[key])
 }
 
 func (m *DO) Get(key string) (interface{}, bool) {
