@@ -3,6 +3,8 @@ package djson
 import (
 	"log"
 	"testing"
+
+	"github.com/volatiletech/null/v8"
 )
 
 func TestParseJson(t *testing.T) {
@@ -215,11 +217,11 @@ func TestUpdateDJSON(t *testing.T) {
 	log.Println(aJson.GetAsString())
 }
 
-func TestAutoFieldTag(t *testing.T) {
+func TestToFieldTag(t *testing.T) {
 	type User struct {
-		Id    int    `json:"id"`
-		Name  string `json:"name"`
-		Email string `json:"email"`
+		Id    string      `json:"id"`
+		Name  string      `json:"name"`
+		Email null.String `json:"email"`
 	}
 
 	var user User
@@ -232,9 +234,31 @@ func TestAutoFieldTag(t *testing.T) {
 		},
 	)
 
-	mJson.AutoFields(&user)
+	mJson.ToFields(&user)
 
 	log.Println(user)
+}
+
+func TestFromFieldTag(t *testing.T) {
+	type User struct {
+		Id    string      `json:"id"`
+		Name  string      `json:"name"`
+		Email null.String `json:"email"`
+	}
+
+	var user = User{
+		Id:   "id-1234",
+		Name: "Ricardo Longa",
+		Email: null.String{
+			String: "longa@test.com",
+			Valid:  true,
+		},
+	}
+
+	mJson := NewDJSON()
+	mJson.FromFields(user)
+
+	log.Println(mJson)
 }
 
 func TestHandleDJSON(t *testing.T) {
