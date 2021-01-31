@@ -2,6 +2,8 @@ package djson
 
 import (
 	"reflect"
+
+	"github.com/volatiletech/null/v8"
 )
 
 func (m *DJSON) Size() int {
@@ -131,63 +133,153 @@ func (m *DJSON) ToFields(st interface{}) {
 
 func (m *DJSON) fromFiledsValue(val reflect.Value) {
 
-	for i := 0; i < val.NumField(); i++ {
-		eachVal := val.Field(i)
-		eachType := val.Type().Field(i)
-		eachTag := eachType.Tag.Get("json")
+	kind := val.Type().Kind()
 
-		eachKind := eachType.Type.Kind()
+	if kind == reflect.Array || kind == reflect.Slice || kind == reflect.Struct {
 
-		if eachKind == reflect.Struct {
+		for i := 0; i < val.NumField(); i++ {
+			eachVal := val.Field(i)
+			eachType := val.Type().Field(i)
+			eachTag := eachType.Tag.Get("json")
 
-			switch eachType.Type.String() {
-			case "null.String":
-				m.Put(eachTag, eachVal.FieldByName("String").String())
-			case "null.Bool":
-				m.Put(eachTag, eachVal.FieldByName("Bool").Bool())
-			case "null.Float32":
-				m.Put(eachTag, eachVal.FieldByName("Float32").Float())
-			case "null.Float64":
-				m.Put(eachTag, eachVal.FieldByName("Float64").Float())
-			case "null.Int":
-				m.Put(eachTag, eachVal.FieldByName("Int").Int())
-			case "null.Int8":
-				m.Put(eachTag, eachVal.FieldByName("Int8").Int())
-			case "null.Int16":
-				m.Put(eachTag, eachVal.FieldByName("Int16").Int())
-			case "null.Int32":
-				m.Put(eachTag, eachVal.FieldByName("Int32").Int())
-			case "null.Int64":
-				m.Put(eachTag, eachVal.FieldByName("Int64").Int())
-			case "null.Uint":
-				m.Put(eachTag, eachVal.FieldByName("Uint").Uint())
-			case "null.Uint8":
-				m.Put(eachTag, eachVal.FieldByName("Uint8").Uint())
-			case "null.Uint16":
-				m.Put(eachTag, eachVal.FieldByName("Uint16").Uint())
-			case "null.Uint32":
-				m.Put(eachTag, eachVal.FieldByName("Uint32").Uint())
-			case "null.Uint64":
-				m.Put(eachTag, eachVal.FieldByName("Uint64").Uint())
+			eachKind := eachType.Type.Kind()
+
+			if eachKind == reflect.Struct || eachKind == reflect.Map {
+
+				switch eachType.Type.String() {
+				case "null.String":
+					m.Put(eachTag, eachVal.FieldByName("String").String())
+				case "null.Bool":
+					m.Put(eachTag, eachVal.FieldByName("Bool").Bool())
+				case "null.Float32":
+					m.Put(eachTag, eachVal.FieldByName("Float32").Float())
+				case "null.Float64":
+					m.Put(eachTag, eachVal.FieldByName("Float64").Float())
+				case "null.Int":
+					m.Put(eachTag, eachVal.FieldByName("Int").Int())
+				case "null.Int8":
+					m.Put(eachTag, eachVal.FieldByName("Int8").Int())
+				case "null.Int16":
+					m.Put(eachTag, eachVal.FieldByName("Int16").Int())
+				case "null.Int32":
+					m.Put(eachTag, eachVal.FieldByName("Int32").Int())
+				case "null.Int64":
+					m.Put(eachTag, eachVal.FieldByName("Int64").Int())
+				case "null.Uint":
+					m.Put(eachTag, eachVal.FieldByName("Uint").Uint())
+				case "null.Uint8":
+					m.Put(eachTag, eachVal.FieldByName("Uint8").Uint())
+				case "null.Uint16":
+					m.Put(eachTag, eachVal.FieldByName("Uint16").Uint())
+				case "null.Uint32":
+					m.Put(eachTag, eachVal.FieldByName("Uint32").Uint())
+				case "null.Uint64":
+					m.Put(eachTag, eachVal.FieldByName("Uint64").Uint())
+				default:
+					sJson := NewDJSON()
+					sJson.SetAsObject()
+					sJson.fromFiledsValue(eachVal)
+					m.Put(eachTag, sJson)
+				}
+
+			} else {
+
+				switch eachType.Type.String() {
+				case "int", "int8", "int16", "int32", "int64":
+					m.Put(eachTag, eachVal.Int())
+				case "uint", "uint8", "uint16", "uint32", "uint64":
+					m.Put(eachTag, eachVal.Uint())
+				case "float32", "float64":
+					m.Put(eachTag, eachVal.Float())
+				case "string":
+					m.Put(eachTag, eachVal.String())
+				case "bool":
+					m.Put(eachTag, eachVal.Bool())
+				}
+			}
+		}
+	} else if kind == reflect.Map {
+
+		for _, e := range val.MapKeys() {
+			eachKey, ok := e.Interface().(string)
+			if !ok {
+				continue
+			}
+
+			eachVal := val.MapIndex(e)
+
+			switch t := eachVal.Interface().(type) {
+			case int:
+				m.Put(eachKey, t)
+			case int8:
+				m.Put(eachKey, t)
+			case int16:
+				m.Put(eachKey, t)
+			case int32:
+				m.Put(eachKey, t)
+			case int64:
+				m.Put(eachKey, t)
+			case uint:
+				m.Put(eachKey, t)
+			case uint8:
+				m.Put(eachKey, t)
+			case uint16:
+				m.Put(eachKey, t)
+			case uint32:
+				m.Put(eachKey, t)
+			case uint64:
+				m.Put(eachKey, t)
+			case float32:
+				m.Put(eachKey, t)
+			case float64:
+				m.Put(eachKey, t)
+			case string:
+				m.Put(eachKey, t)
+			case bool:
+				m.Put(eachKey, t)
+			case nil:
+				m.Put(eachKey, t)
+			case null.String:
+				m.Put(eachKey, t.String)
+			case null.Bool:
+				m.Put(eachKey, t.Bool)
+			case null.Int:
+				m.Put(eachKey, t.Int)
+			case null.Int8:
+				m.Put(eachKey, t.Int8)
+			case null.Int16:
+				m.Put(eachKey, t.Int16)
+			case null.Int32:
+				m.Put(eachKey, t.Int32)
+			case null.Int64:
+				m.Put(eachKey, t.Int64)
+			case null.Uint:
+				m.Put(eachKey, t.Uint)
+			case null.Uint8:
+				m.Put(eachKey, t.Uint8)
+			case null.Uint16:
+				m.Put(eachKey, t.Uint16)
+			case null.Uint32:
+				m.Put(eachKey, t.Uint32)
+			case null.Uint64:
+				m.Put(eachKey, t.Uint64)
+			case null.Float32:
+				m.Put(eachKey, t.Float32)
+			case null.Float64:
+				m.Put(eachKey, t.Float64)
 			default:
-				sJson := NewDJSON()
-				sJson.fromFiledsValue(eachVal)
-				m.Put(eachTag, sJson)
+
+				skind := reflect.ValueOf(t).Type().Kind()
+
+				if skind == reflect.Struct || skind == reflect.Map {
+					sJson := NewDJSON()
+					sJson.SetAsObject()
+					sJson.FromFields(t)
+					m.Put(eachKey, sJson)
+				}
+
 			}
 
-		} else {
-			switch eachType.Type.String() {
-			case "int", "int8", "int16", "int32", "int64":
-				m.Put(eachTag, eachVal.Int())
-			case "uint", "uint8", "uint16", "uint32", "uint64":
-				m.Put(eachTag, eachVal.Uint())
-			case "float32", "float64":
-				m.Put(eachTag, eachVal.Float())
-			case "string":
-				m.Put(eachTag, eachVal.String())
-			case "bool":
-				m.Put(eachTag, eachVal.Bool())
-			}
 		}
 	}
 }
@@ -199,40 +291,13 @@ func (m *DJSON) FromFields(st interface{}) {
 
 	if kind == reflect.Array || kind == reflect.Slice {
 
-		m.JsonType = JSON_ARRAY
+		m.SetAsArray()
 		m.fromFiledsValue(baseValue)
 
-	} else if kind == reflect.Struct {
+	} else if kind == reflect.Struct || kind == reflect.Map {
 
-		m.JsonType = JSON_OBJECT
+		m.SetAsObject()
 		m.fromFiledsValue(baseValue)
 
-	} else if kind == reflect.Map {
-
-		m.JsonType = JSON_OBJECT
-
-		for _, e := range baseValue.MapKeys() {
-			eachKey, ok := e.Interface().(string)
-			if !ok {
-				continue
-			}
-
-			eachVal := baseValue.MapIndex(e)
-
-			switch eachVal.Type().String() {
-			case "int", "int8", "int16", "int32", "int64":
-				m.Put(eachKey, eachVal.Int())
-			case "uint", "uint8", "uint16", "uint32", "uint64":
-				m.Put(eachKey, eachVal.Uint())
-			case "float32", "float64":
-				m.Put(eachKey, eachVal.Float())
-			case "string":
-				m.Put(eachKey, eachVal.String())
-			case "bool":
-				m.Put(eachKey, eachVal.Bool())
-			case "nil":
-				m.Put(eachKey, nil)
-			}
-		}
 	}
 }
