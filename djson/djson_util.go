@@ -2,6 +2,7 @@ package djson
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/volatiletech/null/v8"
 )
@@ -41,7 +42,7 @@ func (m *DJSON) HasKey(key interface{}) bool {
 	return false
 }
 
-func (m *DJSON) toFieldsValue(val reflect.Value) {
+func (m *DJSON) toFieldsValue(val reflect.Value, tags ...string) {
 
 	for i := 0; i < val.NumField(); i++ {
 		eachVal := val.Field(i)
@@ -49,6 +50,10 @@ func (m *DJSON) toFieldsValue(val reflect.Value) {
 		eachTag := eachType.Tag.Get("json")
 
 		if !eachVal.CanSet() || !m.HasKey(eachTag) {
+			continue
+		}
+
+		if len(tags) > 0 && !inTags(eachTag, tags...) {
 			continue
 		}
 
@@ -102,7 +107,7 @@ func (m *DJSON) toFieldsValue(val reflect.Value) {
 			default:
 
 				if oJson, ok := m.GetAsObject(eachTag); ok {
-					oJson.toFieldsValue(eachVal)
+					oJson.toFieldsValue(eachVal, downDepthWW(tags)...)
 				}
 
 			}
@@ -125,13 +130,13 @@ func (m *DJSON) toFieldsValue(val reflect.Value) {
 	}
 }
 
-func (m *DJSON) ToFields(st interface{}) {
+func (m *DJSON) ToFields(st interface{}, tags ...string) {
 	target := reflect.ValueOf(st)
 	elements := target.Elem()
-	m.toFieldsValue(elements)
+	m.toFieldsValue(elements, tags...)
 }
 
-func (m *DJSON) fromFiledsValue(val reflect.Value) {
+func (m *DJSON) fromFiledsValue(val reflect.Value, tags ...string) {
 
 	kind := val.Type().Kind()
 
@@ -141,6 +146,10 @@ func (m *DJSON) fromFiledsValue(val reflect.Value) {
 			eachVal := val.Field(i)
 			eachType := val.Type().Field(i)
 			eachTag := eachType.Tag.Get("json")
+
+			if len(tags) > 0 && !inTags(eachTag, tags...) {
+				continue
+			}
 
 			eachKind := eachType.Type.Kind()
 
@@ -178,7 +187,7 @@ func (m *DJSON) fromFiledsValue(val reflect.Value) {
 				default:
 					sJson := NewDJSON()
 					sJson.SetAsObject()
-					sJson.fromFiledsValue(eachVal)
+					sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
 					m.Put(eachTag, sJson)
 				}
 
@@ -203,6 +212,10 @@ func (m *DJSON) fromFiledsValue(val reflect.Value) {
 		for _, e := range val.MapKeys() {
 			eachKey, ok := e.Interface().(string)
 			if !ok {
+				continue
+			}
+
+			if len(tags) > 0 && !inTags(eachKey, tags...) {
 				continue
 			}
 
@@ -274,7 +287,7 @@ func (m *DJSON) fromFiledsValue(val reflect.Value) {
 				if skind == reflect.Struct || skind == reflect.Map {
 					sJson := NewDJSON()
 					sJson.SetAsObject()
-					sJson.FromFields(t)
+					sJson.FromFields(t, downDepthWW(tags)...)
 					m.Put(eachKey, sJson)
 				}
 
@@ -284,7 +297,7 @@ func (m *DJSON) fromFiledsValue(val reflect.Value) {
 	}
 }
 
-func (m *DJSON) FromFields(st interface{}) {
+func (m *DJSON) FromFields(st interface{}, tags ...string) {
 	baseValue := reflect.ValueOf(st)
 
 	kind := baseValue.Type().Kind()
@@ -292,12 +305,38 @@ func (m *DJSON) FromFields(st interface{}) {
 	if kind == reflect.Array || kind == reflect.Slice {
 
 		m.SetAsArray()
-		m.fromFiledsValue(baseValue)
+		m.fromFiledsValue(baseValue, tags...)
 
 	} else if kind == reflect.Struct || kind == reflect.Map {
 
 		m.SetAsObject()
-		m.fromFiledsValue(baseValue)
+		m.fromFiledsValue(baseValue, tags...)
 
 	}
+}
+
+func downDepthWW(tags []string) []string {
+	tags2 := make([]string, 0)
+	for idx := range tags {
+		tmp := strings.Split(tags[idx], ".")
+		tmp2 := strings.Join(tmp[1:], ".")
+		if tmp2 != "" {
+			tags2 = append(tags2, tmp2)
+		} else {
+			tags2 = append(tags2, "")
+		}
+	}
+
+	return tags2
+}
+
+func inTags(idv string, tags ...string) bool {
+	for idx := range tags {
+		tmp := strings.Split(tags[idx], ".")
+		if tmp[0] == idv {
+			return true
+		}
+	}
+
+	return false
 }

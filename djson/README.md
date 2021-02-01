@@ -257,3 +257,80 @@ fmt.Println(mJson.GetAsInt("idade", 10)) // must be 28
 fmt.Println(mJson.GetAsInt("name", 10)) // must be 10 because `name` field cannot be convert to integer
 fmt.Println(mJson.GetAsInt("hobbies", 10)) // must be 10 because no such field `hobbies`
 ```
+
+### 2.5. To Structure
+- DJSON supports null package for sqlboiler (`github.com/volatiletech/null`)
+```go
+type User struct {
+    Id    string      `json:"id"`
+    Name  string      `json:"name"`
+    Email null.String `json:"email"`
+}
+
+var user User
+
+mJson := NewDJSON().Put(
+    Object{
+        "id":    "id-1234",
+        "name":  "Ricardo Longa",
+        "email": "longa@test.com",
+    },
+)
+
+mJson.ToFields(&user, "id", "email") // only (`id`, `email`) tag
+
+fmt.Println(user) // must be {id-1234  {longa@test.com true}}
+```
+
+### 2.6. From Structure
+```go
+type User struct {
+    Id    string      `json:"id"`
+    Name  string      `json:"name"`
+    Email null.String `json:"email"`
+}
+
+var user = User{
+    Id:   "id-1234",
+    Name: "Ricardo Longa",
+    Email: null.String{
+        String: "longa@test.com",
+        Valid:  true,
+    },
+}
+
+mJson := NewDJSON()
+mJson.FromFields(user) // no tag
+
+// must be like {"email":"longa@test.com","id":"id-1234","name":"Ricardo Longa"}
+fmt.Println(mJson.ToString()) 
+
+}
+```
+
+### 2.7. From Map and Structure
+```go
+type Name struct {
+    First  string `json:"first"`
+    Family string `json:"family"`
+}
+
+user := make(map[string]interface{})
+
+user["id"] = "id-1234"
+user["name"] = Name{
+    First:  "Ricardo",
+    Family: "Longa",
+}
+
+user["email"] = null.String{
+    String: "longa@test.com",
+    Valid:  true,
+}
+
+mJson := NewDJSON()
+mJson.FromFields(user, "name.first", "email") // tag has depth concept
+
+// must be like {"email":"longa@test.com","name":{"first":"Ricardo"}}
+fmt.Println(mJson.ToString())
+```

@@ -24,7 +24,7 @@ func TestToFieldTag(t *testing.T) {
 		},
 	)
 
-	mJson.ToFields(&user)
+	mJson.ToFields(&user, "id", "email")
 
 	log.Println(user)
 }
@@ -72,7 +72,7 @@ func TestFromFieldMapTest(t *testing.T) {
 	}
 
 	mJson := NewDJSON()
-	mJson.FromFields(user)
+	mJson.FromFields(user, "name.first", "email")
 
 	log.Println(mJson.ToString())
 }
