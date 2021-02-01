@@ -215,28 +215,6 @@ func TestUpdateDJSON(t *testing.T) {
 	log.Println(aJson.GetAsString())
 }
 
-func TestAutoFieldTag(t *testing.T) {
-	type User struct {
-		Id    int    `json:"id"`
-		Name  string `json:"name"`
-		Email string `json:"email"`
-	}
-
-	var user User
-
-	mJson := NewDJSON().Put(
-		Object{
-			"id":    "id-1234",
-			"name":  "Ricardo Longa",
-			"email": "longa@test.com",
-		},
-	)
-
-	mJson.AutoFields(&user)
-
-	log.Println(user)
-}
-
 func TestHandleDJSON(t *testing.T) {
 	jsonDoc := `{
 		"name":"Ricardo Longa",

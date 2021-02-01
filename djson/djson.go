@@ -67,6 +67,22 @@ func NewDJSON(v ...int) *DJSON {
 	return &dj
 }
 
+func (m *DJSON) SetAsObject() *DJSON {
+	m.Object = NewObject()
+	m.Array = nil
+	m.JsonType = JSON_OBJECT
+
+	return m
+}
+
+func (m *DJSON) SetAsArray() *DJSON {
+	m.Array = NewArray()
+	m.Object = nil
+	m.JsonType = JSON_ARRAY
+
+	return m
+}
+
 func (m *DJSON) Parse(doc string) *DJSON {
 
 	if m.JsonType != JSON_NULL {
