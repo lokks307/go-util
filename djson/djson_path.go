@@ -186,13 +186,16 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 	arrayTaskFunc func(da *DA, idx int, v interface{}),
 	objectTaskFunc func(do *DO, key string, v interface{})) error {
 
-	if XPathRegExp == nil {
-		return unavailableError
+	path = strings.TrimSpace(path)
+	if !strings.HasPrefix(path, `[`) || !strings.HasSuffix(path, `]`) {
+		return invalidPathError
 	}
 
-	matches := XPathRegExp.FindAllStringSubmatch(path, -1)
+	path = strings.TrimRight(strings.TrimLeft(path, `[`), `]`)
 
-	pathLen := len(matches)
+	eachPath := strings.Split(path, `][`)
+
+	pathLen := len(eachPath)
 
 	if pathLen == 0 {
 		return invalidPathError
@@ -202,9 +205,9 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 	dObject := m.Object
 	dArray := m.Array
 
-	for idx := range matches {
+	for idx := range eachPath {
 
-		kstr := matches[idx][1]
+		kstr := eachPath[idx]
 
 		kidx, err := strconv.Atoi(kstr)
 		if err != nil {
@@ -214,11 +217,7 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 				kstr = strings.TrimRight(strings.TrimLeft(kstr, `'`), `'`)
 			}
 
-			if jsonMode != JSON_OBJECT {
-				return invalidPathError
-			}
-
-			if dObject == nil {
+			if jsonMode != JSON_OBJECT || dObject == nil {
 				return invalidPathError
 			}
 
@@ -245,11 +244,8 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 			}
 
 		} else {
-			if jsonMode != JSON_ARRAY {
-				return invalidPathError
-			}
 
-			if dArray == nil {
+			if jsonMode != JSON_ARRAY || dArray == nil {
 				return invalidPathError
 			}
 

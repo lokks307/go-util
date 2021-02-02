@@ -1,6 +1,8 @@
 package djson
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type DO struct {
 	Map map[string]interface{}
