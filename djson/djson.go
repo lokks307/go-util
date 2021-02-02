@@ -753,3 +753,24 @@ func (m *DJSON) ToString() string {
 
 	return "" // zero value
 }
+
+func (m *DJSON) ReplaceAt(k interface{}, v interface{}) *DJSON {
+	switch tkey := k.(type) {
+	case string:
+		if m.JsonType == JSON_OBJECT {
+
+			if m.Object.HasKey(tkey) {
+				m.Object.Put(tkey, v)
+			}
+
+		}
+	case int:
+		if m.JsonType == JSON_ARRAY {
+			if m.Array.Size() > tkey {
+				m.Array.ReplaceAt(tkey, v)
+			}
+		}
+	}
+
+	return m
+}

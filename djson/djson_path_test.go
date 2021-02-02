@@ -77,3 +77,36 @@ func TestPutPath(t *testing.T) {
 
 	log.Println(aJson.GetAsString())
 }
+
+func TestGetAsArrayObjectPath(t *testing.T) {
+	jsonDoc := `[
+		{
+			"name":"Ricardo Longa",
+			"idade":28,
+			"skills":[
+				"Golang","Android"
+			]
+		},
+		{
+			"name":"Hery Victor",
+			"idade":32,
+			"skills":[
+				"Golang",
+				"Java"
+			]
+		}
+	]`
+
+	aJson := NewDJSON().Parse(jsonDoc)
+
+	dJson, ok := aJson.GetAsArrayPath(`[1]["skills"]`)
+	if !ok {
+		log.Fatal("GetAsArrayPath() failed")
+	}
+
+	log.Println(dJson.ToString())
+
+	dJson.ReplaceAt(0, "Javascript")
+
+	log.Println(aJson.ToString())
+}

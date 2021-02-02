@@ -5,6 +5,58 @@ import (
 	"strings"
 )
 
+func (m *DJSON) GetAsObjectPath(path string) (*DJSON, bool) {
+
+	retJson := NewDJSON()
+
+	err := m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			if obj, ok := da.GetAsObject(idx); ok {
+				retJson.Object = obj
+				retJson.JsonType = JSON_OBJECT
+			}
+		},
+		func(do *DO, key string, v interface{}) {
+			if obj, ok := do.GetAsObject(key); ok {
+				retJson.Object = obj
+				retJson.JsonType = JSON_OBJECT
+			}
+		},
+	)
+
+	if err != nil || retJson.JsonType != JSON_OBJECT {
+		return nil, false
+	}
+
+	return retJson, true
+}
+
+func (m *DJSON) GetAsArrayPath(path string) (*DJSON, bool) {
+
+	retJson := NewDJSON()
+
+	err := m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			if arr, ok := da.GetAsArray(idx); ok {
+				retJson.Array = arr
+				retJson.JsonType = JSON_ARRAY
+			}
+		},
+		func(do *DO, key string, v interface{}) {
+			if arr, ok := do.GetAsArray(key); ok {
+				retJson.Array = arr
+				retJson.JsonType = JSON_ARRAY
+			}
+		},
+	)
+
+	if err != nil || retJson.JsonType != JSON_ARRAY {
+		return nil, false
+	}
+
+	return retJson, true
+}
+
 func (m *DJSON) GetAsFloatPath(path string, defFloat ...float64) float64 {
 	var retFloat float64
 	var ok bool
