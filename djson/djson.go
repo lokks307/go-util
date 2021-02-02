@@ -32,11 +32,6 @@ type DJSON struct {
 var XPathRegExp *regexp.Regexp
 
 func init() {
-	var err error
-	XPathRegExp, err = regexp.Compile(`\[(\"[a-zA-Z0-9]+\"|[0-9]+)\]`)
-	if err != nil {
-		XPathRegExp = nil
-	}
 }
 
 func NewDJSON(v ...int) *DJSON {
