@@ -171,6 +171,21 @@ func (m *DJSON) RemovePath(path string) error {
 	)
 }
 
+func (m *DJSON) PutPath(path string, okey interface{}, oval interface{}) error {
+	return m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			if oIdx, ok := okey.(int); ok {
+				da.Insert(oIdx, oval)
+			}
+		},
+		func(do *DO, key string, v interface{}) {
+			if oKey, ok := okey.(string); ok {
+				do.Put(oKey, oval)
+			}
+		},
+	)
+}
+
 func (m *DJSON) UpdatePath(path string, val interface{}) error {
 	return m.doPathFunc(path, val,
 		func(da *DA, idx int, v interface{}) {
