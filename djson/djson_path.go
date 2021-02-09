@@ -1,10 +1,5 @@
 package djson
 
-import (
-	"strconv"
-	"strings"
-)
-
 func (m *DJSON) GetAsObjectPath(path string) (*DJSON, bool) {
 
 	retJson := NewDJSON()
@@ -197,54 +192,33 @@ func (m *DJSON) UpdatePath(path string, val interface{}) error {
 	)
 }
 
-func (m *DJSON) doPathFunc(path string, val interface{},
+func (m *DJSON) doPathFuncCore(
 	arrayTaskFunc func(da *DA, idx int, v interface{}),
-	objectTaskFunc func(do *DO, key string, v interface{})) error {
-
-	path = strings.TrimSpace(path)
-	if !strings.HasPrefix(path, `[`) || !strings.HasSuffix(path, `]`) {
-		return invalidPathError
-	}
-
-	path = strings.TrimRight(strings.TrimLeft(path, `[`), `]`)
-
-	eachPath := strings.Split(path, `][`)
-
-	pathLen := len(eachPath)
-
-	if pathLen == 0 {
-		return invalidPathError
-	}
+	objectTaskFunc func(do *DO, key string, v interface{}),
+	val interface{}, token ...interface{}) error {
 
 	jsonMode := m.JsonType
 	dObject := m.Object
 	dArray := m.Array
 
-	for idx := range eachPath {
+	tokenLen := len(token)
 
-		kstr := eachPath[idx]
-
-		kidx, err := strconv.Atoi(kstr)
-		if err != nil {
-			if strings.HasPrefix(kstr, `"`) && strings.HasSuffix(kstr, `"`) {
-				kstr = strings.TrimRight(strings.TrimLeft(kstr, `"`), `"`)
-			} else if strings.HasPrefix(kstr, `'`) && strings.HasSuffix(kstr, `'`) {
-				kstr = strings.TrimRight(strings.TrimLeft(kstr, `'`), `'`)
-			}
-
+	for idx := range token {
+		switch tkey := token[idx].(type) {
+		case string:
 			if jsonMode != JSON_OBJECT || dObject == nil {
 				return invalidPathError
 			}
 
-			if idx == pathLen-1 {
-				objectTaskFunc(dObject, kstr, val)
+			if idx == tokenLen-1 {
+				objectTaskFunc(dObject, tkey, val)
 				return nil
 			} else {
-				if _, ok := dObject.Map[kstr]; !ok {
+				if _, ok := dObject.Map[tkey]; !ok {
 					return invalidPathError
 				}
 
-				switch t := dObject.Map[kstr].(type) {
+				switch t := dObject.Map[tkey].(type) {
 				case *DO:
 					dObject = t
 					dArray = nil
@@ -257,22 +231,20 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 					return invalidPathError
 				}
 			}
-
-		} else {
-
+		case int:
 			if jsonMode != JSON_ARRAY || dArray == nil {
 				return invalidPathError
 			}
 
-			for dArray.Size() <= kidx {
+			for dArray.Size() <= tkey {
 				dArray.PushBack(0)
 			}
 
-			if idx == pathLen-1 {
-				arrayTaskFunc(dArray, kidx, val)
+			if idx == tokenLen-1 {
+				arrayTaskFunc(dArray, tkey, val)
 				return nil
 			} else {
-				switch t := dArray.Element[kidx].(type) {
+				switch t := dArray.Element[tkey].(type) {
 				case *DO:
 					dObject = t
 					dArray = nil
@@ -285,8 +257,17 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 					return invalidPathError
 				}
 			}
+		default:
+			return invalidPathError
 		}
 	}
 
 	return invalidPathError
+
+}
+
+func (m *DJSON) doPathFunc(path string, val interface{},
+	arrayTaskFunc func(da *DA, idx int, v interface{}),
+	objectTaskFunc func(do *DO, key string, v interface{})) error {
+	return m.doPathFuncCore(arrayTaskFunc, objectTaskFunc, val, PathTokenizer(path)...)
 }
