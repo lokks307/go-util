@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	gov "github.com/asaskevich/govalidator"
@@ -227,4 +228,67 @@ func ParseArray(data []interface{}) *DA {
 	}
 
 	return arr
+}
+
+func PathTokenizer(path string) []interface{} {
+	rstack := NewRuneStack()
+	token := make([]rune, 0)
+	inTokens := make([]string, 0)
+
+	prev := rune(0)
+	var depthL int
+
+	for _, each := range path {
+
+		peek := rstack.Peek()
+
+		if depthL == 0 {
+			if each == '[' && prev != '\\' {
+				rstack.Push(each)
+				token = make([]rune, 0)
+				depthL = 1
+			} else {
+				token = append(token, each)
+			}
+		} else if depthL == 1 {
+			if peek == '[' && each == ']' && prev != '\\' {
+				if len(token) > 0 {
+					inTokens = append(inTokens, string(token))
+					token = make([]rune, 0)
+				}
+				rstack.Pop()
+				depthL = 0
+			} else if (each == '"' || each == '\'') && prev != '\\' {
+				rstack.Push(each)
+				depthL = 2
+			} else {
+				token = append(token, each)
+			}
+		} else if depthL == 2 {
+
+			if (peek == '"' && each == '"' && prev != '\\') || (peek == '\'' && each == '\'' && prev != '\\') {
+				if len(token) > 0 {
+					inTokens = append(inTokens, string(token))
+					token = make([]rune, 0)
+				}
+				rstack.Pop()
+				depthL = 1
+			} else {
+				token = append(token, each)
+			}
+		}
+
+		prev = each
+	}
+
+	outTokens := make([]interface{}, 0)
+	for idx := range inTokens {
+		if intVal, err := strconv.Atoi(inTokens[idx]); err == nil {
+			outTokens = append(outTokens, intVal)
+		} else {
+			outTokens = append(outTokens, inTokens[idx])
+		}
+	}
+
+	return outTokens
 }

@@ -2,6 +2,8 @@ package djson
 
 import (
 	"encoding/json"
+
+	"github.com/volatiletech/null/v8"
 )
 
 type DO struct {
@@ -21,6 +23,34 @@ func (m *DO) Put(key string, value interface{}) *DO {
 	}
 
 	switch t := value.(type) {
+	case null.String:
+		m.Map[key] = t.String
+	case null.Bool:
+		m.Map[key] = t.Bool
+	case null.Int:
+		m.Map[key] = t.Int
+	case null.Int8:
+		m.Map[key] = t.Int8
+	case null.Int16:
+		m.Map[key] = t.Int16
+	case null.Int32:
+		m.Map[key] = t.Int32
+	case null.Int64:
+		m.Map[key] = t.Int64
+	case null.Uint:
+		m.Map[key] = t.Uint
+	case null.Uint8:
+		m.Map[key] = t.Uint8
+	case null.Uint16:
+		m.Map[key] = t.Uint16
+	case null.Uint32:
+		m.Map[key] = t.Uint32
+	case null.Uint64:
+		m.Map[key] = t.Uint64
+	case null.Float32:
+		m.Map[key] = t.Float32
+	case null.Float64:
+		m.Map[key] = t.Float64
 	case DO:
 		m.Map[key] = &t
 	case DA:

@@ -2,21 +2,8 @@ package djson
 
 import (
 	"log"
-	"regexp"
 	"testing"
 )
-
-func TestParsePath(t *testing.T) {
-
-	XPathRegExp, err := regexp.Compile(`\[(\"[a-zA-Z0-9]+\"|[0-9]+)\]`)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	paths := XPathRegExp.FindAllStringSubmatch(`["name"][1]`, -1)
-	log.Println(paths)
-}
 
 func TestPutPath(t *testing.T) {
 	jsonDoc := `[

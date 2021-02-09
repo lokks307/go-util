@@ -2,6 +2,8 @@ package djson
 
 import (
 	"encoding/json"
+
+	"github.com/volatiletech/null/v8"
 )
 
 type DA struct {
@@ -33,6 +35,34 @@ func (m *DA) ReplaceAt(idx int, value interface{}) *DA {
 	}
 
 	switch t := value.(type) {
+	case null.String:
+		m.Element[idx] = t.String
+	case null.Bool:
+		m.Element[idx] = t.Bool
+	case null.Int:
+		m.Element[idx] = t.Int
+	case null.Int8:
+		m.Element[idx] = t.Int8
+	case null.Int16:
+		m.Element[idx] = t.Int16
+	case null.Int32:
+		m.Element[idx] = t.Int32
+	case null.Int64:
+		m.Element[idx] = t.Int64
+	case null.Uint:
+		m.Element[idx] = t.Uint
+	case null.Uint8:
+		m.Element[idx] = t.Uint8
+	case null.Uint16:
+		m.Element[idx] = t.Uint16
+	case null.Uint32:
+		m.Element[idx] = t.Uint32
+	case null.Uint64:
+		m.Element[idx] = t.Uint64
+	case null.Float32:
+		m.Element[idx] = t.Float32
+	case null.Float64:
+		m.Element[idx] = t.Float64
 	case *DA:
 		m.Element[idx] = t
 	case *DO:
