@@ -3,6 +3,7 @@ package event
 import (
 	"fmt"
 
+	"github.com/lokks307-dev/go-util/djson"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -13,6 +14,7 @@ type AEvent struct {
 	Data     interface{}
 	DataInts []int
 	DataStrs []string
+	DataJson *djson.DJSON
 }
 
 type EvtStage uint8
