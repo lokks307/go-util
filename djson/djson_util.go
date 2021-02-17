@@ -297,7 +297,7 @@ func (m *DJSON) fromFiledsValue(val reflect.Value, tags ...string) {
 	}
 }
 
-func (m *DJSON) FromFields(st interface{}, tags ...string) {
+func (m *DJSON) FromFields(st interface{}, tags ...string) *DJSON {
 	baseValue := reflect.ValueOf(st)
 
 	kind := baseValue.Type().Kind()
@@ -313,6 +313,8 @@ func (m *DJSON) FromFields(st interface{}, tags ...string) {
 		m.fromFiledsValue(baseValue, tags...)
 
 	}
+
+	return m
 }
 
 func downDepthWW(tags []string) []string {

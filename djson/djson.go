@@ -62,6 +62,70 @@ func NewDJSON(v ...int) *DJSON {
 	return &dj
 }
 
+func NewStringJSON(v ...interface{}) *DJSON {
+	dj := NewDJSON(JSON_STRING)
+	if len(v) > 0 {
+		dj.Put(v[0])
+	}
+
+	return dj
+}
+
+func NewIntJSON(v ...interface{}) *DJSON {
+	dj := NewDJSON(JSON_INT)
+	if len(v) > 0 {
+		dj.Put(v[0])
+	}
+
+	return dj
+}
+
+func NewBoolJSON(v ...interface{}) *DJSON {
+	dj := NewDJSON(JSON_BOOL)
+	if len(v) > 0 {
+		dj.Put(v[0])
+	}
+
+	return dj
+}
+
+func NewFloatJSON(v ...interface{}) *DJSON {
+	dj := NewDJSON(JSON_FLOAT)
+	if len(v) > 0 {
+		dj.Put(v[0])
+	}
+
+	return dj
+}
+
+func NewObjectJSON(v ...interface{}) *DJSON {
+	dj := NewDJSON(JSON_OBJECT)
+
+	var key string
+	var ok bool
+	for idx := range v {
+		if idx%2 == 0 {
+			if key, ok = v[idx].(string); !ok {
+				return dj
+			}
+		} else {
+			dj.Put(key, v[idx])
+		}
+	}
+
+	return dj
+}
+
+func NewArrayJSON(v ...interface{}) *DJSON {
+	dj := NewDJSON(JSON_ARRAY)
+
+	for idx := range v {
+		dj.Put(v[idx])
+	}
+
+	return dj
+}
+
 func (m *DJSON) SetAsObject() *DJSON {
 	m.Object = NewObject()
 	m.Array = nil
@@ -136,10 +200,24 @@ func (m *DJSON) Put(v ...interface{}) *DJSON {
 
 		if key, ok := v[0].(string); ok {
 			m.PutAsObject(key, v[1])
+		} else {
+			for idx := range v {
+				m.PutAsArray(v[idx])
+			}
 		}
 
 		return m
 	}
+
+	if len(v) >= 3 { // must be array
+		for idx := range v {
+			m.PutAsArray(v[idx])
+		}
+
+		return m
+	}
+
+	// length of v must be 1
 
 	if v[0] == nil {
 		m.Array = nil
@@ -149,34 +227,50 @@ func (m *DJSON) Put(v ...interface{}) *DJSON {
 	}
 
 	if IsInTypes(v[0], "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64") {
-		m.Int, _ = getIntBase(v)
-		m.Array = nil
-		m.Object = nil
-		m.JsonType = JSON_INT
+		if m.JsonType == JSON_NULL || m.JsonType == JSON_INT {
+			m.Int, _ = getIntBase(v[0])
+			m.Array = nil
+			m.Object = nil
+			m.JsonType = JSON_INT
+		} else {
+			m.PutAsArray(v[0]) // best effort
+		}
 		return m
 	}
 
 	if IsInTypes(v[0], "float32", "float64") {
-		m.Float, _ = getFloatBase(v[0])
-		m.Array = nil
-		m.Object = nil
-		m.JsonType = JSON_FLOAT
+		if m.JsonType == JSON_NULL || m.JsonType == JSON_FLOAT {
+			m.Float, _ = getFloatBase(v[0])
+			m.Array = nil
+			m.Object = nil
+			m.JsonType = JSON_FLOAT
+		} else {
+			m.PutAsArray(v[0]) // best effort
+		}
 		return m
 	}
 
 	if IsInTypes(v[0], "bool") {
-		m.Bool, _ = getBoolBase(v[0])
-		m.Array = nil
-		m.Object = nil
-		m.JsonType = JSON_BOOL
+		if m.JsonType == JSON_NULL || m.JsonType == JSON_BOOL {
+			m.Bool, _ = getBoolBase(v[0])
+			m.Array = nil
+			m.Object = nil
+			m.JsonType = JSON_BOOL
+		} else {
+			m.PutAsArray(v[0]) // best effort
+		}
 		return m
 	}
 
 	if IsInTypes(v[0], "string") {
-		m.String, _ = getStringBase(v[0])
-		m.Array = nil
-		m.Object = nil
-		m.JsonType = JSON_STRING
+		if m.JsonType == JSON_NULL || m.JsonType == JSON_STRING {
+			m.String, _ = getStringBase(v[0])
+			m.Array = nil
+			m.Object = nil
+			m.JsonType = JSON_STRING
+		} else {
+			m.PutAsArray(v[0]) // best effort
+		}
 		return m
 	}
 
@@ -256,6 +350,10 @@ func (m *DJSON) Put(v ...interface{}) *DJSON {
 		}
 	case DJSON:
 		m = &t
+	default:
+		if m.JsonType == JSON_ARRAY {
+			m.Array.Put(t)
+		}
 	}
 
 	return m

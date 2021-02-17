@@ -236,3 +236,27 @@ func TestHandleDJSON(t *testing.T) {
 	log.Println(aJson.ToString())
 
 }
+
+func TestFastDeclare(t *testing.T) {
+	dJson := NewObjectJSON(
+		"key", "value", "key2", "value2",
+	)
+
+	log.Println(dJson.ToString())
+
+	aJson := NewArrayJSON(
+		1, 2, 3, 4, 5, 6, 7,
+	)
+
+	log.Println(aJson.ToString())
+
+	tJson := NewDJSON(JSON_ARRAY)
+	tJson.Put(1)
+
+	log.Println(tJson.ToString())
+
+	pJson := NewDJSON()
+	pJson.Put(1)
+
+	log.Println(pJson.ToString())
+}
