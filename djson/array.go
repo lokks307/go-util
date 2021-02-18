@@ -92,7 +92,7 @@ func (m *DA) ReplaceAt(idx int, value interface{}) *DA {
 
 func (m *DA) Insert(idx int, value interface{}) *DA {
 	if idx > m.Size() || idx < 0 {
-		return m
+		idx = m.Size()
 	}
 
 	if idx == m.Size() { // back

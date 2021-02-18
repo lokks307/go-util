@@ -2,7 +2,6 @@ package djson
 
 import (
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -27,11 +26,6 @@ type DJSON struct {
 	Float    float64
 	Bool     bool
 	JsonType int
-}
-
-var XPathRegExp *regexp.Regexp
-
-func init() {
 }
 
 func NewDJSON(v ...int) *DJSON {
