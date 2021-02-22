@@ -342,3 +342,60 @@ func inTags(idv string, tags ...string) bool {
 
 	return false
 }
+
+func (m *DJSON) doSort(isAsc bool, k ...interface{}) bool {
+	var tArray *DA
+
+	if len(k) == 0 {
+		if m.JsonType == JSON_ARRAY {
+			tArray = m.Array
+		}
+	}
+
+	if len(k) > 0 {
+
+		if m.JsonType == JSON_OBJECT {
+			if key, ok := k[0].(string); ok {
+				if da, ok := m.Object.GetAsArray(key); ok {
+					tArray = da
+				}
+			}
+		} else if m.JsonType == JSON_ARRAY {
+			if idx, ok := k[0].(int); ok {
+				if da, ok := m.Array.GetAsArray(idx); ok {
+					tArray = da
+				}
+			}
+		}
+	}
+
+	if tArray != nil {
+		return tArray.Sort(isAsc)
+	} else {
+		return false
+	}
+}
+
+func (m *DJSON) SortAsc(k ...interface{}) bool {
+	return m.doSort(true, k...)
+}
+
+func (m *DJSON) SortDesc(k ...interface{}) bool {
+	return m.doSort(false, k...)
+}
+
+func (m *DJSON) SortObjectArray(isAsc bool, key string) bool {
+	if m.JsonType != JSON_ARRAY {
+		return false
+	}
+
+	return m.Array.SortObject(isAsc, key)
+}
+
+func (m *DJSON) SortObjectArrayAsc(key string) bool {
+	return m.SortObjectArray(true, key)
+}
+
+func (m *DJSON) SortObjectArrayDesc(key string) bool {
+	return m.SortObjectArray(false, key)
+}

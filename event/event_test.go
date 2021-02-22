@@ -21,9 +21,18 @@ func TestEventBus(t *testing.T) {
 		fmt.Println("B called")
 	})
 
+	On("onCallBack", func(ae AEvent) {
+		fmt.Println("c called")
+	})
+
+	On("onCallBack", func(ae AEvent) {
+		fmt.Println("d called")
+	})
+
 	_ = Manager.Run()
 
 	Bus <- AEvent{Type: "testEvent"}
+	Bus <- AEvent{Type: "onCallBack"}
 
 	time.Sleep(5 * time.Second)
 }

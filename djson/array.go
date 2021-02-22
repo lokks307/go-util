@@ -2,6 +2,8 @@ package djson
 
 import (
 	"encoding/json"
+	"reflect"
+	"sort"
 
 	"github.com/volatiletech/null/v8"
 )
@@ -105,7 +107,6 @@ func (m *DA) Insert(idx int, value interface{}) *DA {
 }
 
 func (m *DA) Put(value interface{}) *DA {
-
 	switch t := value.(type) {
 	case Array:
 		for idx := range t {
@@ -292,4 +293,227 @@ func (m *DA) ToStringPretty() string {
 func (m *DA) ToString() string {
 	jsonByte, _ := json.Marshal(ConvertArrayToSlice(m))
 	return string(jsonByte)
+}
+
+func (m *DA) SortObject(isAsc bool, key string) bool {
+	numElement := len(m.Element)
+
+	if numElement == 0 {
+		return false
+	}
+
+	var elemType string
+
+	for i := range m.Element {
+		do, ok := m.GetAsObject(i)
+		if !ok {
+			return false
+		}
+
+		kv, ok := do.Get(key)
+		if !ok {
+			return false
+		}
+
+		eachType := reflect.TypeOf(kv).String()
+		if elemType == "" {
+			elemType = eachType
+		} else {
+			if elemType != eachType {
+				return false
+			}
+		}
+	}
+
+	if isAsc {
+
+		sort.Slice(m.Element, func(i, j int) bool {
+
+			ido, _ := m.Element[i].(*DO)
+			jdo, _ := m.Element[j].(*DO)
+
+			switch elemType {
+			case "string":
+
+				iRune := []rune(ido.GetAsString(key))
+				jRune := []rune(jdo.GetAsString(key))
+
+				lenToInspect := len(iRune)
+				if len(jRune) < lenToInspect {
+					lenToInspect = len(jRune)
+				}
+
+				for k := 0; k < lenToInspect; k++ {
+					if iRune[k] == jRune[k] {
+						continue
+					}
+
+					if iRune[k] < jRune[k] {
+						return true
+					}
+
+					return false
+				}
+
+				return len(iRune) < len(jRune)
+
+			case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+				iInt, _ := ido.GetAsInt(key)
+				jInt, _ := jdo.GetAsInt(key)
+				return iInt < jInt
+			case "float32", "float64":
+				iFloat, _ := ido.GetAsFloat(key)
+				jFloat, _ := jdo.GetAsFloat(key)
+				return iFloat < jFloat
+			case "bool":
+				jBool, _ := jdo.GetAsBool(key)
+				return jBool
+			default:
+				return true
+			}
+		})
+
+	} else {
+		sort.Slice(m.Element, func(i, j int) bool {
+
+			ido, _ := m.Element[i].(*DO)
+			jdo, _ := m.Element[j].(*DO)
+
+			switch elemType {
+			case "string":
+
+				iRune := []rune(ido.GetAsString(key))
+				jRune := []rune(jdo.GetAsString(key))
+
+				lenToInspect := len(iRune)
+				if len(jRune) < lenToInspect {
+					lenToInspect = len(jRune)
+				}
+
+				for k := 0; k < lenToInspect; k++ {
+					if iRune[k] == jRune[k] {
+						continue
+					}
+
+					if iRune[k] > jRune[k] {
+						return true
+					}
+
+					return false
+				}
+
+				return len(iRune) > len(jRune)
+
+			case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+				iInt, _ := ido.GetAsInt(key)
+				jInt, _ := jdo.GetAsInt(key)
+				return iInt > jInt
+			case "float32", "float64":
+				iFloat, _ := ido.GetAsFloat(key)
+				jFloat, _ := jdo.GetAsFloat(key)
+				return iFloat > jFloat
+			case "bool":
+				iBool, _ := ido.GetAsBool(key)
+				return iBool
+			default:
+				return false
+			}
+		})
+	}
+
+	return true
+
+}
+
+func (m *DA) Sort(isAsc bool) bool {
+
+	numElement := len(m.Element)
+
+	if numElement == 0 {
+		return false
+	}
+
+	var elemType string
+	for i := range m.Element {
+		eachType := reflect.TypeOf(m.Element[i]).String()
+		if elemType == "" {
+			elemType = eachType
+		} else {
+			if elemType != eachType {
+				return false
+			}
+		}
+	}
+
+	if elemType == "string" {
+
+		tmpElment := make([]string, numElement)
+		for i := range m.Element {
+			tmpElment[i] = m.Element[i].(string)
+		}
+
+		sort.Strings(tmpElment)
+
+		if isAsc {
+			for i := range m.Element {
+				m.Element[i] = tmpElment[i]
+			}
+		} else {
+			for i := range m.Element {
+				m.Element[numElement-i-1] = tmpElment[i]
+			}
+		}
+
+		return true
+
+	} else {
+
+		if isAsc {
+			sort.Slice(m.Element, func(i, j int) bool {
+				switch elemType {
+				case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+					iInt, _ := m.GetAsInt(i)
+					jInt, _ := m.GetAsInt(j)
+					return iInt < jInt
+				case "float32", "float64":
+					iFloat, _ := m.GetAsFloat(i)
+					jFloat, _ := m.GetAsFloat(j)
+					return iFloat < jFloat
+				case "bool":
+					jBool, _ := m.GetAsBool(j)
+					return jBool
+				default:
+					return true
+				}
+			})
+		} else {
+			sort.Slice(m.Element, func(i, j int) bool {
+				switch elemType {
+				case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+					iInt, _ := m.GetAsInt(i)
+					jInt, _ := m.GetAsInt(j)
+					return iInt > jInt
+				case "float32", "float64":
+					iFloat, _ := m.GetAsFloat(i)
+					jFloat, _ := m.GetAsFloat(j)
+					return iFloat < jFloat
+				case "bool":
+					iBool, _ := m.GetAsBool(i)
+					return iBool
+				default:
+					return false
+				}
+			})
+		}
+
+		return true
+	}
+}
+
+func (m *DA) SortAsc() bool {
+	return m.Sort(true)
+}
+
+func (m *DA) SortDesc() bool {
+	return m.Sort(false)
 }
