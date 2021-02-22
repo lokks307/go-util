@@ -155,6 +155,76 @@ func (m *DJSON) GetTypePath(path string) string {
 	return pathType
 }
 
+func (m *DJSON) SortObjectArrayPath(path string, isAsc bool, okey string) error {
+	var isSorted bool
+
+	err := m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			if tda, ok := da.GetAsArray(idx); ok {
+				isSorted = tda.SortObject(isAsc, okey)
+			} else {
+				isSorted = false
+			}
+		},
+		func(do *DO, key string, v interface{}) {
+			if tda, ok := do.GetAsArray(key); ok {
+				isSorted = tda.SortObject(isAsc, okey)
+			} else {
+				isSorted = false
+			}
+		},
+	)
+
+	if err != nil || !isSorted {
+		return failedToSortError
+	} else {
+		return nil
+	}
+}
+
+func (m *DJSON) SortObjectArrayAscPath(path string, key string) error {
+	return m.SortObjectArrayPath(path, true, key)
+}
+
+func (m *DJSON) SortObjectArrayDescPath(path string, key string) error {
+	return m.SortObjectArrayPath(path, false, key)
+}
+
+func (m *DJSON) SortPath(path string, isAsc bool) error {
+	var isSorted bool
+
+	err := m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			if tda, ok := da.GetAsArray(idx); ok {
+				isSorted = tda.Sort(isAsc)
+			} else {
+				isSorted = false
+			}
+		},
+		func(do *DO, key string, v interface{}) {
+			if tda, ok := do.GetAsArray(key); ok {
+				isSorted = tda.Sort(isAsc)
+			} else {
+				isSorted = false
+			}
+		},
+	)
+
+	if err != nil || !isSorted {
+		return failedToSortError
+	} else {
+		return nil
+	}
+}
+
+func (m *DJSON) SortDescPath(path string) error {
+	return m.SortPath(path, false)
+}
+
+func (m *DJSON) SortAscPath(path string) error {
+	return m.SortPath(path, true)
+}
+
 func (m *DJSON) RemovePath(path string) error {
 	return m.doPathFunc(path, nil,
 		func(da *DA, idx int, v interface{}) {

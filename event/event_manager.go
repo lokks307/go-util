@@ -160,3 +160,11 @@ func (m *EventManager) Run() error {
 func (m *EventManager) Stop() {
 	m.cancelChan <- true
 }
+
+func (m *EventManager) On(etype string, funcp func(ae AEvent)) string {
+	return m.Subscribe(funcp, etype)
+}
+
+func On(etype string, funcp func(ae AEvent)) string {
+	return Manager.Subscribe(funcp, etype)
+}

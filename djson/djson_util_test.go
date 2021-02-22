@@ -76,3 +76,89 @@ func TestFromFieldMapTest(t *testing.T) {
 
 	log.Println(mJson.ToString())
 }
+
+func TestSortingArray(t *testing.T) {
+	mJson := NewArrayJSON(5, 6, 7, 8, 1, 2, 3, 4)
+	if ok := mJson.SortAsc(); !ok {
+		log.Fatal("sorting test failed")
+	}
+
+	log.Println(mJson.ToString())
+
+	tJson := NewDJSON().Put(Object{
+		"d": "aaa",
+		"a": Array{
+			5, 6, 7, 8, 1, 2, 3, 4,
+		},
+	})
+
+	if ok := tJson.SortAsc("a"); !ok {
+		log.Fatal("sorting test failed")
+	}
+
+	log.Println(tJson.ToString())
+
+	err := tJson.SortDescPath(`["a"]`)
+
+	if err != nil {
+		log.Fatal("sorting path failed")
+	}
+
+	log.Println(tJson.ToString())
+
+	pJson := NewDJSON().Put(
+		Array{
+			Object{
+				"k": "1",
+				"v": "1",
+			},
+			Object{
+				"k": "22",
+				"v": "2",
+			},
+			Object{
+				"k": "4444",
+				"v": "4",
+			},
+			Object{
+				"k": "333",
+				"v": "3",
+			},
+		},
+	)
+
+	pJson.SortObjectArrayAsc("k")
+
+	p2Json := NewDJSON().Put(
+		Object{
+			"kk": Array{
+				Object{
+					"k": null.String{
+						String: "1",
+					},
+					"v": "1",
+				},
+				Object{
+					"k": null.String{
+						String: "22",
+					},
+					"v": "2",
+				},
+				Object{
+					"k": "9",
+					"v": "4",
+				},
+				Object{
+					"k": "1",
+					"v": "3",
+				},
+			},
+		},
+	)
+
+	p2Json.SortObjectArrayDescPath(`[kk]`, "k")
+
+	log.Println(pJson.ToString())
+	log.Println(p2Json.ToString())
+
+}
