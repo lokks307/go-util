@@ -116,6 +116,118 @@ func (m *DA) Put(value interface{}) *DA {
 		for idx := range t {
 			m.Insert(m.Size(), t[idx])
 		}
+	case []int:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []int8:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []int16:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []int32:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []int64:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []uint:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []uint8:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []uint16:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []uint32:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []uint64:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []float32:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []float64:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []bool:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []string:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.String:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Bool:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Float32:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Float64:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Int:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Int8:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Int16:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Int32:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Int64:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Uint:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Uint8:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Uint16:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Uint32:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
+	case []null.Uint64:
+		for idx := range t {
+			m.Insert(m.Size(), t[idx])
+		}
 	default:
 		m.Insert(m.Size(), value)
 	}

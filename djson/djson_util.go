@@ -140,7 +140,71 @@ func (m *DJSON) fromFiledsValue(val reflect.Value, tags ...string) {
 
 	kind := val.Type().Kind()
 
-	if kind == reflect.Array || kind == reflect.Slice || kind == reflect.Struct {
+	if kind == reflect.Array || kind == reflect.Slice {
+
+		for i := 0; i < val.Len(); i++ {
+			eachVal := val.Index(i)
+			eachType := eachVal.Type()
+
+			switch eachVal.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				m.PutAsArray(eachVal.Int())
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				m.PutAsArray(eachVal.Uint())
+			case reflect.Bool:
+				m.PutAsArray(eachVal.Bool())
+			case reflect.String:
+				m.PutAsArray(eachVal.String())
+			case reflect.Float32, reflect.Float64:
+				m.PutAsArray(eachVal.Float())
+			case reflect.Array, reflect.Slice:
+				sJson := NewDJSON()
+				sJson.SetAsArray()
+				sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
+				m.PutAsArray(sJson)
+			case reflect.Struct, reflect.Map:
+				switch eachType.String() {
+				case "null.String":
+					m.PutAsArray(eachVal.FieldByName("String").String())
+				case "null.Bool":
+					m.PutAsArray(eachVal.FieldByName("Bool").Bool())
+				case "null.Float32":
+					m.PutAsArray(eachVal.FieldByName("Float32").Float())
+				case "null.Float64":
+					m.PutAsArray(eachVal.FieldByName("Float64").Float())
+				case "null.Int":
+					m.PutAsArray(eachVal.FieldByName("Int").Int())
+				case "null.Int8":
+					m.PutAsArray(eachVal.FieldByName("Int8").Int())
+				case "null.Int16":
+					m.PutAsArray(eachVal.FieldByName("Int16").Int())
+				case "null.Int32":
+					m.PutAsArray(eachVal.FieldByName("Int32").Int())
+				case "null.Int64":
+					m.PutAsArray(eachVal.FieldByName("Int64").Int())
+				case "null.Uint":
+					m.PutAsArray(eachVal.FieldByName("Uint").Uint())
+				case "null.Uint8":
+					m.PutAsArray(eachVal.FieldByName("Uint8").Uint())
+				case "null.Uint16":
+					m.PutAsArray(eachVal.FieldByName("Uint16").Uint())
+				case "null.Uint32":
+					m.PutAsArray(eachVal.FieldByName("Uint32").Uint())
+				case "null.Uint64":
+					m.PutAsArray(eachVal.FieldByName("Uint64").Uint())
+				default:
+					sJson := NewDJSON()
+					sJson.SetAsObject()
+					sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
+					m.PutAsArray(sJson)
+				}
+			default:
+				m.PutAsArray(nil)
+			}
+
+		}
+
+	} else if kind == reflect.Struct {
 
 		for i := 0; i < val.NumField(); i++ {
 			eachVal := val.Field(i)

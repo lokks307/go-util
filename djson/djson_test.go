@@ -260,3 +260,13 @@ func TestFastDeclare(t *testing.T) {
 
 	log.Println(pJson.ToString())
 }
+
+func TestWrapArray(t *testing.T) {
+	mJson := NewDJSON(JSON_ARRAY)
+
+	bb := []int{1, 2, 3, 4, 5, 6, 7, 8}
+
+	mJson.Put(bb)
+
+	log.Println(mJson.ToString())
+}
