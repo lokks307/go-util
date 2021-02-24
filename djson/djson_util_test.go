@@ -162,3 +162,45 @@ func TestSortingArray(t *testing.T) {
 	log.Println(p2Json.ToString())
 
 }
+
+func TestReflectType(t *testing.T) {
+
+	aJson := NewDJSON().Put(Object{
+		"name": "yu",
+		"skill": Array{
+			"running", "playing",
+		},
+	})
+
+	bJson := NewDJSON().Put(Object{
+		"skill": Array{
+			"running", "playing",
+		},
+		"name": "yu",
+	})
+
+	if aJson.Equal(bJson) {
+		log.Println("jsons are the same")
+	} else {
+		log.Println("jsons are not the same")
+	}
+}
+
+func TestClone(t *testing.T) {
+	aJson := NewDJSON().Put(Object{
+		"name": "yu",
+		"skill": Array{
+			"running", "playing",
+		},
+	})
+
+	bJson := aJson.Clone()
+
+	aJson.UpdatePath(`[skill][2]`, "swimming")
+
+	bJson.PutAsObject("name", "not you")
+	bJson.UpdatePath(`[skill][2]`, "studying")
+
+	log.Println(aJson.ToString())
+	log.Println(bJson.ToString())
+}

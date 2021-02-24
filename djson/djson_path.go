@@ -313,7 +313,7 @@ func (m *DJSON) doPathFuncCore(
 				return invalidPathError
 			}
 
-			for dArray.Size() <= tkey {
+			for dArray.Size() < tkey {
 				dArray.PushBack(0)
 			}
 
@@ -347,4 +347,31 @@ func (m *DJSON) doPathFunc(path string, val interface{},
 	arrayTaskFunc func(da *DA, idx int, v interface{}),
 	objectTaskFunc func(do *DO, key string, v interface{})) error {
 	return m.doPathFuncCore(arrayTaskFunc, objectTaskFunc, val, PathTokenizer(path)...)
+}
+
+func (m *DJSON) GetKeysPath(path string) ([]string, error) {
+	rk := make([]string, 0)
+
+	err := m.doPathFunc(path, nil,
+		func(da *DA, idx int, v interface{}) {
+			if ddo, ok := da.GetAsObject(idx); ok {
+				for k := range ddo.Map {
+					rk = append(rk, k)
+				}
+			}
+		},
+		func(do *DO, key string, v interface{}) {
+			if ddo, ok := do.GetAsObject(key); ok {
+				for k := range ddo.Map {
+					rk = append(rk, k)
+				}
+			}
+		},
+	)
+
+	if err != nil {
+		return []string{}, err
+	}
+
+	return rk, nil
 }

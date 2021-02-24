@@ -2,6 +2,7 @@ package djson
 
 import (
 	"encoding/json"
+	"reflect"
 
 	"github.com/volatiletech/null/v8"
 )
@@ -281,4 +282,100 @@ func (m *DO) Length() int {
 
 func (m *DO) Size() int {
 	return len(m.Map)
+}
+
+func (m *DO) Equal(t *DO) bool {
+	if m.Size() != t.Size() {
+		return false
+	}
+
+	for i := range m.Map {
+
+		mtype := reflect.TypeOf(m.Map[i]).String()
+		ttype := reflect.TypeOf(t.Map[i]).String()
+
+		if mtype != ttype {
+			return false
+		}
+
+		switch mtype {
+		case "string":
+			if m.Map[i].(string) != t.Map[i].(string) {
+				return false
+			}
+		case "bool":
+			if m.Map[i].(bool) != t.Map[i].(bool) {
+				return false
+			}
+		case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+			mInt, _ := m.GetAsInt(i)
+			tInt, _ := t.GetAsInt(i)
+			if mInt != tInt {
+				return false
+			}
+		case "float32", "float64":
+			mFloat, _ := m.GetAsFloat(i)
+			tFloat, _ := t.GetAsFloat(i)
+			if mFloat != tFloat {
+				return false
+			}
+		case "*djson.DO":
+			mdo := m.Map[i].(*DO)
+			tdo := t.Map[i].(*DO)
+
+			if !mdo.Equal(tdo) {
+				return false
+			}
+		case "*djson.DA":
+			mda := m.Map[i].(*DA)
+			tda := t.Map[i].(*DA)
+
+			if !mda.Equal(tda) {
+				return false
+			}
+		case "*djson.DJSON":
+			mjson := m.Map[i].(*DJSON)
+			tjson := t.Map[i].(*DJSON)
+
+			if !mjson.Equal(tjson) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (m *DO) Clone() *DO {
+
+	t := NewObject()
+
+	t.Map = make(map[string]interface{})
+
+	for k := range m.Map {
+
+		mtype := reflect.TypeOf(m.Map[k]).String()
+
+		switch mtype {
+		case "string":
+			t.Map[k] = m.Map[k].(string)
+		case "bool":
+			t.Map[k] = m.Map[k].(bool)
+		case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+			t.Map[k], _ = m.GetAsInt(k)
+		case "Map", "float64":
+			t.Map[k], _ = m.GetAsFloat(k)
+		case "*djson.DO":
+			mdo := m.Map[k].(*DO)
+			t.Map[k] = mdo.Clone()
+		case "*djson.DA":
+			mda := m.Map[k].(*DA)
+			t.Map[k] = mda.Clone()
+		case "*djson.DJSON":
+			mdjson := m.Map[k].(*DJSON)
+			t.Map[k] = mdjson.Clone()
+		}
+	}
+
+	return t
 }

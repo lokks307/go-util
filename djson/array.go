@@ -629,3 +629,99 @@ func (m *DA) SortAsc() bool {
 func (m *DA) SortDesc() bool {
 	return m.Sort(false)
 }
+
+func (m *DA) Equal(t *DA) bool {
+	if m.Size() != t.Size() {
+		return false
+	}
+
+	for i := range m.Element {
+
+		mtype := reflect.TypeOf(m.Element[i]).String()
+		ttype := reflect.TypeOf(t.Element[i]).String()
+
+		if mtype != ttype {
+			return false
+		}
+
+		switch mtype {
+		case "string":
+			if m.Element[i].(string) != t.Element[i].(string) {
+				return false
+			}
+		case "bool":
+			if m.Element[i].(bool) != t.Element[i].(bool) {
+				return false
+			}
+		case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+			mInt, _ := m.GetAsInt(i)
+			tInt, _ := t.GetAsInt(i)
+			if mInt != tInt {
+				return false
+			}
+		case "float32", "float64":
+			mFloat, _ := m.GetAsFloat(i)
+			tFloat, _ := t.GetAsFloat(i)
+			if mFloat != tFloat {
+				return false
+			}
+		case "*djson.DO":
+			mdo := m.Element[i].(*DO)
+			tdo := t.Element[i].(*DO)
+
+			if !mdo.Equal(tdo) {
+				return false
+			}
+		case "*djson.DA":
+			mda := m.Element[i].(*DA)
+			tda := t.Element[i].(*DA)
+
+			if !mda.Equal(tda) {
+				return false
+			}
+		case "*djson.DJSON":
+			mjson := m.Element[i].(*DJSON)
+			tjson := t.Element[i].(*DJSON)
+
+			if !mjson.Equal(tjson) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (m *DA) Clone() *DA {
+
+	t := NewArray()
+
+	t.Element = make([]interface{}, m.Size())
+
+	for i := range m.Element {
+
+		mtype := reflect.TypeOf(m.Element[i]).String()
+
+		switch mtype {
+		case "string":
+			t.Element[i] = m.Element[i].(string)
+		case "bool":
+			t.Element[i] = m.Element[i].(bool)
+		case "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64":
+			t.Element[i], _ = m.GetAsInt(i)
+		case "float32", "float64":
+			t.Element[i], _ = m.GetAsFloat(i)
+		case "*djson.DO":
+			mdo := m.Element[i].(*DO)
+			t.Element[i] = mdo.Clone()
+		case "*djson.DA":
+			mda := m.Element[i].(*DA)
+			t.Element[i] = mda.Clone()
+		case "*djson.DJSON":
+			mdjson := m.Element[i].(*DJSON)
+			t.Element[i] = mdjson.Clone()
+		}
+	}
+
+	return t
+}
