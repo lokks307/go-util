@@ -86,6 +86,10 @@ func TestGetAsArrayObjectPath(t *testing.T) {
 
 	aJson := NewDJSON().Parse(jsonDoc)
 
+	aJson.UpdatePath(`[medicines][2]`, "010-1234-5665")
+
+	log.Println(aJson.ToString())
+
 	dJson, ok := aJson.GetAsArray("medicines")
 	if !ok {
 		log.Fatal("GetAsArray() failed")
@@ -99,4 +103,32 @@ func TestGetAsArrayObjectPath(t *testing.T) {
 	}
 
 	log.Println(pJson.ToString())
+}
+
+func TestGetKeysPath(t *testing.T) {
+	jsonDoc := `{
+		"hospital":{
+		  "hospital_name":"록스병원",
+		  "doctor_name":"김의사",
+		  "department":"신경과"
+		},
+		"medicines": [ {
+		  "name": "타이레놀",
+		  "dose_event" : [
+			{
+			  "date" : "2021-02-02",
+			  "time" : ["#B+30","#L+60"]
+			}
+		  ]
+		}
+		] 
+	  }`
+
+	aJson := NewDJSON().Parse(jsonDoc)
+
+	log.Println(aJson.GetKeys("hospital"))
+	log.Println(aJson.GetKeys("medicines"))
+	log.Println(aJson.GetKeysPath(`[hospital]`))
+	log.Println(aJson.GetKeysPath(`[medicines][0][dose_event][0]`))
+
 }

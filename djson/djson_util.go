@@ -463,3 +463,82 @@ func (m *DJSON) SortObjectArrayAsc(key string) bool {
 func (m *DJSON) SortObjectArrayDesc(key string) bool {
 	return m.SortObjectArray(false, key)
 }
+
+func (m *DJSON) Equal(t *DJSON) bool {
+	if m.JsonType != t.JsonType {
+		return false
+	}
+
+	switch m.JsonType {
+	case JSON_NULL:
+		return true
+	case JSON_BOOL:
+		return m.Bool == t.Bool
+	case JSON_INT:
+		return m.Int == t.Int
+	case JSON_FLOAT:
+		return m.Float == t.Float
+	case JSON_STRING:
+		return m.String == t.String
+	case JSON_OBJECT:
+		return m.Object.Equal(t.Object)
+	case JSON_ARRAY:
+		return m.Array.Equal(t.Array)
+	}
+
+	return false
+}
+
+func (m *DJSON) Clone() *DJSON {
+	t := NewDJSON(m.JsonType)
+
+	switch m.JsonType {
+	case JSON_NULL:
+	case JSON_BOOL:
+		t.Bool = m.Bool
+	case JSON_INT:
+		t.Int = m.Int
+	case JSON_FLOAT:
+		t.Float = m.Float
+	case JSON_STRING:
+		t.String = m.String
+	case JSON_OBJECT:
+		t.Object = m.Object.Clone()
+	case JSON_ARRAY:
+		t.Array = m.Array.Clone()
+	}
+
+	return t
+}
+
+func (m *DJSON) HasKeys(k ...interface{}) bool {
+	for i := range k {
+		if !m.HasKey(k[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (m *DJSON) GetKeys(k ...interface{}) []string {
+	rk := make([]string, 0)
+
+	if len(k) == 0 {
+		if m.JsonType != JSON_OBJECT {
+			return rk
+		}
+
+		for k := range m.Object.Map {
+			rk = append(rk, k)
+		}
+
+		return rk
+	}
+
+	if t, ok := m.GetAsObject(k[0]); ok {
+		return t.GetKeys()
+	}
+
+	return rk
+}
