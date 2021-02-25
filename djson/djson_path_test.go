@@ -43,6 +43,13 @@ func TestPutPath(t *testing.T) {
 
 	log.Println(aJson.GetAsString())
 
+	err = aJson.PushBackPath(`[1]["skills"]`, "kotlin")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(aJson.GetAsString())
+
 	err = aJson.RemovePath(`[1]["name"]["family"]`)
 	if err != nil {
 		log.Fatal(err)
