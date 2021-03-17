@@ -136,7 +136,7 @@ func (m *DJSON) ToFields(st interface{}, tags ...string) {
 	m.toFieldsValue(elements, tags...)
 }
 
-func (m *DJSON) fromFiledsValue(val reflect.Value, tags ...string) {
+func (m *DJSON) fromFieldsValue(val reflect.Value, tags ...string) {
 
 	kind := val.Type().Kind()
 
@@ -160,7 +160,7 @@ func (m *DJSON) fromFiledsValue(val reflect.Value, tags ...string) {
 			case reflect.Array, reflect.Slice:
 				sJson := NewDJSON()
 				sJson.SetAsArray()
-				sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
+				sJson.fromFieldsValue(eachVal, downDepthWW(tags)...)
 				m.PutAsArray(sJson)
 			case reflect.Struct, reflect.Map:
 				switch eachType.String() {
@@ -195,7 +195,7 @@ func (m *DJSON) fromFiledsValue(val reflect.Value, tags ...string) {
 				default:
 					sJson := NewDJSON()
 					sJson.SetAsObject()
-					sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
+					sJson.fromFieldsValue(eachVal, downDepthWW(tags)...)
 					m.PutAsArray(sJson)
 				}
 			default:
@@ -251,7 +251,7 @@ func (m *DJSON) fromFiledsValue(val reflect.Value, tags ...string) {
 				default:
 					sJson := NewDJSON()
 					sJson.SetAsObject()
-					sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
+					sJson.fromFieldsValue(eachVal, downDepthWW(tags)...)
 					m.Put(eachTag, sJson)
 				}
 
@@ -369,12 +369,12 @@ func (m *DJSON) FromFields(st interface{}, tags ...string) *DJSON {
 	if kind == reflect.Array || kind == reflect.Slice {
 
 		m.SetAsArray()
-		m.fromFiledsValue(baseValue, tags...)
+		m.fromFieldsValue(baseValue, tags...)
 
 	} else if kind == reflect.Struct || kind == reflect.Map {
 
 		m.SetAsObject()
-		m.fromFiledsValue(baseValue, tags...)
+		m.fromFieldsValue(baseValue, tags...)
 
 	}
 
