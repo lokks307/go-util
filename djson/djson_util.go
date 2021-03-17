@@ -254,6 +254,12 @@ func (m *DJSON) fromFieldsValue(val reflect.Value, tags ...string) {
 					sJson.fromFieldsValue(eachVal, downDepthWW(tags)...)
 					m.Put(eachTag, sJson)
 				}
+			} else if eachKind == reflect.Array || eachKind == reflect.Slice {
+
+				sJson := NewDJSON()
+				sJson.SetAsArray()
+				sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
+				m.Put(eachTag, sJson)
 
 			} else {
 
