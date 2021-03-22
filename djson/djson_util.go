@@ -258,7 +258,7 @@ func (m *DJSON) fromFieldsValue(val reflect.Value, tags ...string) {
 
 				sJson := NewDJSON()
 				sJson.SetAsArray()
-				sJson.fromFiledsValue(eachVal, downDepthWW(tags)...)
+				sJson.fromFieldsValue(eachVal, downDepthWW(tags)...)
 				m.Put(eachTag, sJson)
 
 			} else {
