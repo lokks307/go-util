@@ -845,11 +845,9 @@ func (m *DJSON) ReplaceAt(k interface{}, v interface{}) *DJSON {
 	switch tkey := k.(type) {
 	case string:
 		if m.JsonType == JSON_OBJECT {
-
 			if m.Object.HasKey(tkey) {
 				m.Object.Put(tkey, v)
 			}
-
 		}
 	case int:
 		if m.JsonType == JSON_ARRAY {

@@ -204,3 +204,51 @@ func TestClone(t *testing.T) {
 	log.Println(aJson.ToString())
 	log.Println(bJson.ToString())
 }
+
+func TestFind(t *testing.T) {
+	aJson := NewDJSON().Put(Array{
+		Object{
+			"name":  "1",
+			"skill": "apple",
+		},
+		Object{
+			"name":  "2",
+			"skill": "banana",
+		},
+	})
+
+	log.Println(aJson.ToString())
+
+	bJson := aJson.Find("name", "1")
+	if bJson == nil {
+		log.Fatalln("find failed")
+	}
+
+	log.Println(bJson.ToString())
+}
+
+func TestAppend(t *testing.T) {
+	aJson := NewDJSON().Put(Array{
+		Object{
+			"name":  "1",
+			"skill": "apple",
+		},
+		Object{
+			"name":  "2",
+			"skill": "banana",
+		},
+	})
+
+	bJson := NewDJSON().Put(Array{
+		Object{
+			"name":  "3",
+			"skill": "apple",
+		},
+		Object{
+			"name":  "4",
+			"skill": "banana",
+		},
+	})
+
+	log.Println(aJson.Append(bJson).ToString())
+}

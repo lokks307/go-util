@@ -36,6 +36,17 @@ func (m *DA) ReplaceAt(idx int, value interface{}) *DA {
 		return m
 	}
 
+	if n, ok := value.(json.Number); ok {
+		if i, err := n.Int64(); err == nil {
+			m.Element[idx] = i
+			return m
+		}
+		if f, err := n.Float64(); err == nil {
+			m.Element[idx] = f
+			return m
+		}
+	}
+
 	switch t := value.(type) {
 	case null.String:
 		m.Element[idx] = t.String
@@ -108,6 +119,10 @@ func (m *DA) Insert(idx int, value interface{}) *DA {
 
 func (m *DA) Put(value interface{}) *DA {
 	switch t := value.(type) {
+	case *DA:
+		for idx := range t.Element {
+			m.Insert(m.Size(), t.Element[idx])
+		}
 	case Array:
 		for idx := range t {
 			m.Insert(m.Size(), t[idx])
