@@ -8,7 +8,7 @@ import (
 func TestParseJson(t *testing.T) {
 	jsonDoc := `{
 		"name": null,
-		"age": 50,
+		"age": 9223372036854775807,
 		"address" : [
 			"Seoul", "Korea"
 		],
@@ -21,6 +21,7 @@ func TestParseJson(t *testing.T) {
 	obj, err := ParseToObject(jsonDoc)
 	if err == nil {
 		log.Println(obj.GetAsString("name"))
+		log.Println(obj.GetAsString("age"))
 		arr, ok := obj.GetAsArray("address")
 		if !ok {
 			log.Fatal("no such key")

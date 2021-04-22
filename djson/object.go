@@ -23,6 +23,17 @@ func (m *DO) Put(key string, value interface{}) *DO {
 		return m
 	}
 
+	if n, ok := value.(json.Number); ok {
+		if i, err := n.Int64(); err == nil {
+			m.Map[key] = i
+			return m
+		}
+		if f, err := n.Float64(); err == nil {
+			m.Map[key] = f
+			return m
+		}
+	}
+
 	switch t := value.(type) {
 	case null.String:
 		m.Map[key] = t.String

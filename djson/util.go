@@ -73,8 +73,12 @@ func getStringBase(v interface{}) (string, bool) {
 		return "nil", true
 	}
 
-	if IsInTypes(v, "string", "bool", "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float32", "float64") {
+	if IsInTypes(v, "string", "bool", "float32", "float64") {
 		return fmt.Sprintf("%v", v), true
+	}
+
+	if IsInTypes(v, "int", "uint", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64") {
+		return fmt.Sprintf("%d", v), true
 	}
 
 	return "", false
@@ -163,8 +167,10 @@ func IsInTypes(v interface{}, types ...string) bool {
 func ParseToObject(doc string) (*DO, error) {
 	var data map[string]interface{}
 
-	err := json.Unmarshal([]byte(doc), &data)
-	if err != nil {
+	d := json.NewDecoder(strings.NewReader(doc))
+	d.UseNumber()
+
+	if err := d.Decode(&data); err != nil {
 		return nil, errors.New("not Object")
 	}
 
@@ -175,8 +181,10 @@ func ParseToObject(doc string) (*DO, error) {
 func ParseToArray(doc string) (*DA, error) {
 	var data []interface{}
 
-	err := json.Unmarshal([]byte(doc), &data)
-	if err != nil {
+	d := json.NewDecoder(strings.NewReader(doc))
+	d.UseNumber()
+
+	if err := d.Decode(&data); err != nil {
 		return nil, errors.New("not Array")
 	}
 
@@ -189,6 +197,17 @@ func ParseObject(data map[string]interface{}) *DO {
 		if IsBaseType(v) {
 			obj.Put(k, v)
 			continue
+		}
+
+		if n, ok := v.(json.Number); ok {
+			if i, err := n.Int64(); err == nil {
+				obj.Put(k, i)
+				continue
+			}
+			if f, err := n.Float64(); err == nil {
+				obj.Put(k, f)
+				continue
+			}
 		}
 
 		switch tValue := v.(type) {
@@ -213,6 +232,17 @@ func ParseArray(data []interface{}) *DA {
 		if IsBaseType(data[idx]) {
 			arr.Put(data[idx])
 			continue
+		}
+
+		if n, ok := data[idx].(json.Number); ok {
+			if i, err := n.Int64(); err == nil {
+				arr.Put(i)
+				continue
+			}
+			if f, err := n.Float64(); err == nil {
+				arr.Put(f)
+				continue
+			}
 		}
 
 		switch tValue := data[idx].(type) {

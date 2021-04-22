@@ -548,3 +548,28 @@ func (m *DJSON) GetKeys(k ...interface{}) []string {
 
 	return rk
 }
+
+func (m *DJSON) Find(key string, val string) *DJSON {
+	if key == "" || m.JsonType != JSON_ARRAY {
+		return nil
+	}
+
+	for i := 0; i < m.Size(); i++ {
+		each, _ := m.GetAsObject(i)
+		if each.GetAsString(key) == val {
+			return each
+		}
+	}
+
+	return nil
+}
+
+func (m *DJSON) Append(arrJson *DJSON) *DJSON {
+	if arrJson == nil || m.JsonType != JSON_ARRAY || !arrJson.IsArray() {
+		return m
+	}
+
+	m.PutAsArray(arrJson.Array)
+
+	return m
+}
