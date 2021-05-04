@@ -139,3 +139,19 @@ func TestGetKeysPath(t *testing.T) {
 	log.Println(aJson.GetKeysPath(`[medicines][0][dose_event][0]`))
 
 }
+
+func TestUpdatePath2(t *testing.T) {
+	jsonDoc := `[{
+		"id":"111",
+		"name" :"222"
+	}]`
+
+	aJson := NewDJSON().Parse(jsonDoc)
+	bJson := aJson.Clone()
+
+	aJson.UpdatePath(`[0]["xxx"]`, "xxxx")
+
+	log.Println(aJson.ToString())
+	log.Println(bJson.ToString())
+
+}
