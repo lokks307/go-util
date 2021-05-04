@@ -569,7 +569,9 @@ func (m *DJSON) Append(arrJson *DJSON) *DJSON {
 		return m
 	}
 
-	m.PutAsArray(arrJson.Array)
+	for i := 0; i < arrJson.Size(); i++ {
+		m.PutAsArray(arrJson.Array.Element[i])
+	}
 
 	return m
 }
