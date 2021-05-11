@@ -9,7 +9,8 @@ import (
 )
 
 type DA struct {
-	Element []interface{}
+	SeekPointer int
+	Element     []interface{}
 }
 
 func NewArray() *DA {
@@ -739,4 +740,22 @@ func (m *DA) Clone() *DA {
 	}
 
 	return t
+}
+
+func (m *DA) Seek(seekp ...int) {
+	m.SeekPointer = 0
+
+	if len(seekp) > 0 && len(m.Element) > seekp[0] {
+		m.SeekPointer = seekp[0]
+	}
+}
+
+func (m *DA) Next() (interface{}, bool) {
+	if len(m.Element) <= m.SeekPointer {
+		return nil, false
+	}
+
+	ret := m.Element[m.SeekPointer]
+	m.SeekPointer++
+	return ret, true
 }

@@ -859,3 +859,59 @@ func (m *DJSON) ReplaceAt(k interface{}, v interface{}) *DJSON {
 
 	return m
 }
+
+func (m *DJSON) Seek(seekp ...int) bool {
+	if m.JsonType == JSON_ARRAY {
+		m.Array.Seek(seekp...)
+		return true
+	}
+
+	return false
+}
+
+func (m *DJSON) Next() *DJSON {
+	if m.JsonType == JSON_ARRAY {
+		v, ok := m.Array.Next()
+		if !ok {
+			return nil
+		}
+
+		ret := NewDJSON()
+		switch t := v.(type) {
+		case string:
+			ret.JsonType = JSON_STRING
+			ret.String = t
+		case bool:
+			ret.JsonType = JSON_BOOL
+			ret.Bool = t
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+			ret.JsonType = JSON_INT
+			ret.Int = reflect.ValueOf(t).Int()
+		case float32, float64:
+			ret.JsonType = JSON_FLOAT
+			ret.Float = reflect.ValueOf(t).Float()
+		case *DA:
+			ret.JsonType = JSON_ARRAY
+			ret.Array = t
+		case *DO:
+			ret.JsonType = JSON_OBJECT
+			ret.Object = t
+		case DA:
+			ret.JsonType = JSON_ARRAY
+			ret.Array = &t
+		case DO:
+			ret.JsonType = JSON_OBJECT
+			ret.Object = &t
+		case *DJSON:
+			ret = t
+		case DJSON:
+			ret = &t
+		case nil:
+			ret.JsonType = JSON_NULL
+		}
+
+		return ret
+	}
+
+	return nil
+}
