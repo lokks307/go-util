@@ -271,3 +271,35 @@ func TestWrapArray(t *testing.T) {
 
 	log.Println(mJson.ToString())
 }
+
+func TestSeekNext(t *testing.T) {
+
+	jsonDoc := `[
+		{"name": "Ricardo Longa"},
+		{"name": "Hery Victor"},
+		3,4
+	]`
+
+	aJson := NewDJSON().Parse(jsonDoc)
+
+	bJson := aJson.Next()
+	if bJson == nil {
+		log.Fatal("not object")
+	}
+
+	log.Println(bJson.ToString())
+
+	bJson = aJson.Next()
+	if bJson == nil {
+		log.Fatal("not object")
+	}
+
+	log.Println(bJson.ToString())
+
+	bJson = aJson.Next()
+	if bJson == nil {
+		log.Fatal("not object")
+	}
+
+	log.Println(bJson.ToString())
+}
