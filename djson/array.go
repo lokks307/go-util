@@ -118,7 +118,13 @@ func (m *DA) Insert(idx int, value interface{}) *DA {
 	return m.ReplaceAt(idx, value)
 }
 
+func (m *DA) PutAsArray(value interface{}) *DA {
+	m.Insert(m.Size(), value)
+	return m
+}
+
 func (m *DA) Put(value interface{}) *DA {
+
 	switch t := value.(type) {
 	case *DA:
 		for idx := range t.Element {

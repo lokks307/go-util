@@ -248,7 +248,7 @@ func ParseArray(data []interface{}) *DA {
 		switch tValue := data[idx].(type) {
 		case []interface{}: // Array
 			nArr := ParseArray(tValue)
-			arr.Put(nArr)
+			arr.PutAsArray(nArr)
 		case map[string]interface{}: // Object
 			nObj := ParseObject(tValue)
 			arr.Put(nObj)
