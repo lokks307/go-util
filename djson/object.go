@@ -111,6 +111,10 @@ func (m *DO) HasKey(key string) bool {
 }
 
 func (m *DO) GetAsString(key string) string {
+	if key == "" {
+		return ""
+	}
+
 	value, ok := m.Map[key]
 	if !ok {
 		return ""
