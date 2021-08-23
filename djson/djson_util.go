@@ -580,6 +580,6 @@ func (m *DJSON) Append(arrJson *DJSON) *DJSON {
 	return m
 }
 
-func IsEmptyArg(key ...interface{}) bool {
+func IsEmptyArg(key []interface{}) bool {
 	return len(key) == 0 || (len(key) == 1 && key[0] == "")
 }
