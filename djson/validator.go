@@ -44,49 +44,49 @@ var EmailRegExp *regexp.Regexp
 var UUIDRegExp *regexp.Regexp
 var TelRegExp *regexp.Regexp
 
-func CheckFuncHex(ts string) bool {
+func CheckFuncHex(ts string, vi ...int64) bool {
 	return HexRegExp.Match([]byte(ts))
 }
 
-func CheckFuncTimestamp(ts string) bool {
+func CheckFuncTimestamp(ts string, vi ...int64) bool {
 	return TimestampRegExp.Match([]byte(ts))
 }
 
-func CheckFuncYYYYMMDD(ts string) bool {
+func CheckFuncYYYYMMDD(ts string, vi ...int64) bool {
 	return YYYYMMDDRegExp.Match([]byte(ts))
 }
 
-func CheckFuncYYMMDD(ts string) bool {
+func CheckFuncYYMMDD(ts string, vi ...int64) bool {
 	return YYMMDDRegExp.Match([]byte(ts))
 }
 
-func CheckFuncHHMMSS(ts string) bool {
+func CheckFuncHHMMSS(ts string, vi ...int64) bool {
 	return HHMMSSRegExp.Match([]byte(ts))
 }
 
-func CheckFuncHHMM(ts string) bool {
+func CheckFuncHHMM(ts string, vi ...int64) bool {
 	return HHMMRegExp.Match([]byte(ts))
 }
 
-func CheckFuncEmail(ts string) bool {
+func CheckFuncEmail(ts string, vi ...int64) bool {
 	return EmailRegExp.Match([]byte(ts))
 }
 
-func CheckFuncIntString(ts string) bool {
+func CheckFuncIntString(ts string, vi ...int64) bool {
 	_, err := strconv.Atoi(ts)
 	return err == nil
 }
 
-func CheckFuncFloatString(ts string) bool {
+func CheckFuncFloatString(ts string, vi ...int64) bool {
 	_, err := strconv.ParseFloat(ts, 64)
 	return err == nil
 }
 
-func CheckFuncUUID(ts string) bool {
+func CheckFuncUUID(ts string, vi ...int64) bool {
 	return UUIDRegExp.Match([]byte(ts))
 }
 
-func CheckISO31661A2(val string) bool {
+func CheckISO31661A2(val string, vi ...int64) bool {
 	if len(val) != 2 {
 		return false
 	}
@@ -102,17 +102,17 @@ func CheckISO31661A2(val string) bool {
 	return false
 }
 
-func CheckBase64(ts string) bool {
+func CheckBase64(ts string, vi ...int64) bool {
 	_, err := base64.StdEncoding.DecodeString(ts)
 	return err == nil
 }
 
-func CheckTelephone(ts string) bool {
+func CheckTelephone(ts string, vi ...int64) bool {
 	return TelRegExp.Match([]byte(ts))
 }
 
 // ISO 3166-2 : KR-XX, GH-XX, ...
-func CheckISO31662(val string) bool {
+func CheckISO31662(val string, vi ...int64) bool {
 	if len(val) < 4 {
 		return false
 	}
@@ -124,18 +124,21 @@ func CheckISO31662(val string) bool {
 	return CheckISO31661A2(val[0:2])
 }
 
-func CheckFuncBoolString(ts string) bool {
+func CheckFuncBoolString(ts string, vi ...int64) bool {
 	tslower := strings.ToLower(ts)
 	return tslower == "true" || tslower == "false"
 }
 
-func CheckHex256IfExist(ts string) bool {
-	if ts == "" {
-		return true
-	}
-
-	if len(ts) == 64 {
+func CheckHex256IfExist(ts string, vi ...int64) bool {
+	if CheckFuncMinMaxString(ts, vi...) {
 		return CheckFuncHex(ts)
+	}
+	return false
+}
+
+func CheckFuncMinMaxString(ts string, vi ...int64) bool {
+	if len(vi) >= 2 {
+		return len(ts) == int(vi[0]) || len(ts) == int(vi[1])
 	}
 
 	return false
@@ -163,7 +166,7 @@ type VItem struct {
 	Size      int64
 	IsRequred bool
 	SubItems  []*VItem
-	CheckFunc func(string) bool
+	CheckFunc func(string, ...int64) bool
 	RegExp    *regexp.Regexp
 }
 
@@ -296,6 +299,11 @@ func GetVItem(name string, ejson *DJSON) *VItem {
 				eitem.Min = ejson.GetAsInt("min", 0)
 				eitem.Max = ejson.GetAsInt("max", 8192)
 			}
+		case "MIN.MAX.STRING":
+			eitem.Type = V_TYPE_STRING
+			eitem.Min = ejson.GetAsInt("min", 0)
+			eitem.Max = ejson.GetAsInt("max", 8192)
+			eitem.CheckFunc = CheckFuncMinMaxString
 		case "OBJECT":
 			subJson, ok := ejson.GetAsObject("object")
 			if ok {
@@ -562,7 +570,7 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 		}
 
 		if vi.CheckFunc != nil {
-			return vi.CheckFunc(ss)
+			return vi.CheckFunc(ss, vi.Min, vi.Max)
 		}
 
 	case V_TYPE_OBJECT:
