@@ -2,8 +2,6 @@ package djson
 
 import (
 	"encoding/base64"
-	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -412,12 +410,7 @@ func (m *Validator) IsValid(tjson *DJSON) bool {
 	}
 
 	if m.Syntax.IsObject() { // json must be valid one
-		log.Println("---------------------------------------------")
 		for _, vitem := range m.RootItems {
-			fmt.Println("---------------------------------------------")
-			fmt.Println(vitem.Type, vitem.Name)
-			fmt.Println(tjson.ToString())
-			fmt.Println("---------------------------------------------")
 			return CheckVItem(vitem, tjson)
 		}
 
@@ -447,13 +440,8 @@ func (m *Validator) IsValid(tjson *DJSON) bool {
 
 			return true
 		}
-		fmt.Println("m.Syntax.IsString")
 
 		for _, vitem := range m.RootItems {
-			fmt.Println("---------------------------------------------")
-			fmt.Println(vitem.Type, vitem.Name)
-			fmt.Println(tjson.ToString())
-			fmt.Println("---------------------------------------------")
 			if CheckVItem(vitem, tjson) {
 				return true
 			}
@@ -467,12 +455,6 @@ func (m *Validator) IsValid(tjson *DJSON) bool {
 }
 
 func CheckVItem(vi *VItem, tjson *DJSON) bool {
-
-	fmt.Println("=============================== B")
-	fmt.Println(vi.Type, vi.Name)
-	fmt.Println(tjson.ToString())
-	fmt.Println("=============================== E")
-
 	if vi.IsRequred && vi.Name != "" && !tjson.HasKey(vi.Name) {
 		return false
 	}
