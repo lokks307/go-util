@@ -161,7 +161,7 @@ func NewValidator() *Validator {
 	}
 }
 
-func (m *Validator) SetSyntax(syntax string) bool {
+func (m *Validator) Compile(syntax string) bool {
 	m.Syntax.Parse(syntax)
 
 	if !m.Syntax.IsObject() && !m.Syntax.IsString() && !m.Syntax.IsArray() {
@@ -406,7 +406,7 @@ func GetVItem(name string, ejson *DJSON) *VItem {
 	return eitem
 }
 
-func (m *Validator) Check(tjson *DJSON) bool {
+func (m *Validator) IsValid(tjson *DJSON) bool {
 	if tjson == nil {
 		return len(m.RootItems) == 0
 	}

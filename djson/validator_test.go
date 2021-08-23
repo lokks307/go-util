@@ -8,7 +8,7 @@ import (
 func TestValidator1(t *testing.T) {
 
 	dv := NewValidator()
-	dv.SetSyntax(`{
+	dv.Compile(`{
 		"type": "OBJECT",
 		"object": {
 			"name": {
@@ -31,7 +31,7 @@ func TestValidator1(t *testing.T) {
 
 	asjon := NewDJSON().Parse(`{"name": "wakeupbb", "skill": ["040809","aaaaaa"]}`)
 
-	if dv.Check(asjon) {
+	if dv.IsValid(asjon) {
 		log.Println("valid")
 	} else {
 		log.Println("not valid")
@@ -42,7 +42,7 @@ func TestValidator1(t *testing.T) {
 func TestValidator2(t *testing.T) {
 
 	dv := NewValidator()
-	dv.SetSyntax(`[{
+	dv.Compile(`[{
 		"type": "OBJECT",
 		"object": {
 			"name": {
@@ -66,7 +66,7 @@ func TestValidator2(t *testing.T) {
 
 	asjon := NewDJSON().Parse(`FF112345`)
 
-	if dv.Check(asjon) {
+	if dv.IsValid(asjon) {
 		log.Println("valid")
 	} else {
 		log.Println("not valid")
@@ -77,7 +77,7 @@ func TestValidator2(t *testing.T) {
 func TestValidator3(t *testing.T) {
 
 	dv := NewValidator()
-	dv.SetSyntax(`{
+	dv.Compile(`{
 		"type": "OBJECT",
 		"object": {
 			"name": {
@@ -92,7 +92,7 @@ func TestValidator3(t *testing.T) {
 
 	asjon := NewDJSON().Parse(`{"name":{"age":"11y","home":"aaa"}}`)
 
-	if dv.Check(asjon) {
+	if dv.IsValid(asjon) {
 		log.Println("valid")
 	} else {
 		log.Println("not valid")
