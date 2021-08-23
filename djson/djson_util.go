@@ -530,7 +530,7 @@ func (m *DJSON) HasKeys(k ...interface{}) bool {
 func (m *DJSON) GetKeys(k ...interface{}) []string {
 	rk := make([]string, 0)
 
-	if len(k) == 0 {
+	if IsEmptyArg(k) {
 		if m.JsonType != JSON_OBJECT {
 			return rk
 		}
@@ -554,8 +554,12 @@ func (m *DJSON) Find(key string, val string) *DJSON {
 		return nil
 	}
 
-	for i := 0; i < m.Size(); i++ {
-		each, _ := m.GetAsObject(i)
+	for i := 0; i < m.Length(); i++ {
+		each, ok := m.GetAsObject(i)
+		if !ok {
+			continue
+		}
+
 		if each.GetAsString(key) == val {
 			return each
 		}
@@ -569,9 +573,13 @@ func (m *DJSON) Append(arrJson *DJSON) *DJSON {
 		return m
 	}
 
-	for i := 0; i < arrJson.Size(); i++ {
+	for i := 0; i < arrJson.Length(); i++ {
 		m.PutAsArray(arrJson.Array.Element[i])
 	}
 
 	return m
+}
+
+func IsEmptyArg(key ...interface{}) bool {
+	return len(key) == 0 || (len(key) == 1 && key[0] == "")
 }

@@ -186,7 +186,7 @@ func (m *DJSON) Parse(doc string) *DJSON {
 
 func (m *DJSON) Put(v ...interface{}) *DJSON {
 
-	if len(v) == 0 {
+	if IsEmptyArg(v) {
 		return m
 	}
 
@@ -395,7 +395,7 @@ func (m *DJSON) Remove(key interface{}) *DJSON {
 }
 
 func (m *DJSON) GetAsInterface(key ...interface{}) interface{} {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		switch m.JsonType {
 		case JSON_NULL:
 			return nil
@@ -436,7 +436,7 @@ func (m *DJSON) GetAsInterface(key ...interface{}) interface{} {
 }
 
 func (m *DJSON) Get(key ...interface{}) (*DJSON, bool) {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m, true
 	} else {
 
@@ -510,7 +510,7 @@ func (m *DJSON) GetAsObject(key ...interface{}) (*DJSON, bool) {
 		return nil, false
 	}
 
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		if m.JsonType == JSON_OBJECT {
 			return m, true
 		}
@@ -554,7 +554,7 @@ func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 		return nil, false
 	}
 
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		if m.JsonType == JSON_ARRAY {
 			return m, true
 		}
@@ -593,7 +593,7 @@ func (m *DJSON) GetAsArray(key ...interface{}) (*DJSON, bool) {
 
 func (m *DJSON) GetAsInt(key ...interface{}) int64 {
 
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 
 		switch m.JsonType {
 		case JSON_ARRAY, JSON_OBJECT, JSON_NULL:
@@ -616,11 +616,17 @@ func (m *DJSON) GetAsInt(key ...interface{}) int64 {
 
 	} else {
 
-		var hasDefaultValue bool
 		var defaultValue int64
 
 		if len(key) >= 2 {
-			defaultValue, hasDefaultValue = key[1].(int64)
+			rv := reflect.ValueOf(key[1])
+			rvKind := rv.Kind()
+			if rvKind == reflect.Int || rvKind == reflect.Int8 || rvKind == reflect.Int16 || rvKind == reflect.Int32 || rvKind == reflect.Int64 {
+				defaultValue = rv.Int()
+			}
+			if rvKind == reflect.Uint || rvKind == reflect.Uint8 || rvKind == reflect.Uint16 || rvKind == reflect.Uint32 || rvKind == reflect.Uint64 {
+				defaultValue = int64(rv.Uint())
+			}
 		}
 
 		switch tkey := key[0].(type) {
@@ -642,16 +648,14 @@ func (m *DJSON) GetAsInt(key ...interface{}) int64 {
 			}
 		}
 
-		if hasDefaultValue {
-			return defaultValue
-		}
+		return defaultValue
 	}
 
 	return 0 // zero value
 }
 
 func (m *DJSON) GetAsBool(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 
 		switch m.JsonType {
 		case JSON_NULL, JSON_FLOAT, JSON_ARRAY, JSON_OBJECT:
@@ -669,11 +673,10 @@ func (m *DJSON) GetAsBool(key ...interface{}) bool {
 
 	} else {
 
-		var hasDefaultValue bool
 		var defaultValue bool
 
 		if len(key) >= 2 {
-			defaultValue, hasDefaultValue = key[1].(bool)
+			defaultValue = key[1].(bool)
 		}
 
 		switch tkey := key[0].(type) {
@@ -695,9 +698,7 @@ func (m *DJSON) GetAsBool(key ...interface{}) bool {
 			}
 		}
 
-		if hasDefaultValue {
-			return defaultValue
-		}
+		return defaultValue
 
 	}
 
@@ -705,7 +706,7 @@ func (m *DJSON) GetAsBool(key ...interface{}) bool {
 }
 
 func (m *DJSON) GetAsFloat(key ...interface{}) float64 {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 
 		switch m.JsonType {
 		case JSON_NULL, JSON_ARRAY, JSON_OBJECT:
@@ -728,11 +729,20 @@ func (m *DJSON) GetAsFloat(key ...interface{}) float64 {
 
 	} else {
 
-		var hasDefaultValue bool
 		var defaultValue float64
 
 		if len(key) >= 2 {
-			defaultValue, hasDefaultValue = key[1].(float64)
+			rv := reflect.ValueOf(key[1])
+			rvKind := rv.Kind()
+			if rvKind == reflect.Float32 || rvKind == reflect.Float64 {
+				defaultValue = rv.Float()
+			}
+			if rvKind == reflect.Int || rvKind == reflect.Int8 || rvKind == reflect.Int16 || rvKind == reflect.Int32 || rvKind == reflect.Int64 {
+				defaultValue = float64(rv.Int())
+			}
+			if rvKind == reflect.Uint || rvKind == reflect.Uint8 || rvKind == reflect.Uint16 || rvKind == reflect.Uint32 || rvKind == reflect.Uint64 {
+				defaultValue = float64(rv.Uint())
+			}
 		}
 
 		switch tkey := key[0].(type) {
@@ -756,9 +766,7 @@ func (m *DJSON) GetAsFloat(key ...interface{}) float64 {
 			}
 		}
 
-		if hasDefaultValue {
-			return defaultValue
-		}
+		return defaultValue
 	}
 
 	return 0 // zero value
@@ -766,17 +774,15 @@ func (m *DJSON) GetAsFloat(key ...interface{}) float64 {
 
 func (m *DJSON) GetAsString(key ...interface{}) string {
 
-	if len(key) == 0 {
-
+	if IsEmptyArg(key) {
 		return m.ToString()
 
 	} else {
 
-		var hasDefaultValue bool
 		var defaultValue string
 
 		if len(key) >= 2 {
-			defaultValue, hasDefaultValue = key[1].(string)
+			defaultValue = key[1].(string)
 		}
 
 		switch tkey := key[0].(type) {
@@ -784,10 +790,6 @@ func (m *DJSON) GetAsString(key ...interface{}) string {
 			if m.JsonType == JSON_OBJECT {
 				if m.Object.HasKey(tkey) {
 					return m.Object.GetAsString(tkey)
-				} else {
-					if hasDefaultValue {
-						return defaultValue
-					}
 				}
 			} else {
 				return tkey // maybe default
@@ -796,19 +798,15 @@ func (m *DJSON) GetAsString(key ...interface{}) string {
 			if m.JsonType == JSON_ARRAY {
 				if m.Array.Size() > tkey {
 					return m.Array.GetAsString(tkey)
-				} else {
-					if hasDefaultValue {
-						return defaultValue
-					}
 				}
 			} else {
 				return strconv.Itoa(tkey) // maybe default
 			}
 		}
 
-	}
+		return defaultValue
 
-	return "" // zero value
+	}
 }
 
 func (m *DJSON) ToString() string {

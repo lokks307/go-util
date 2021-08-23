@@ -26,7 +26,7 @@ func (m *DJSON) isSameType(key interface{}, inTypeStr string) bool {
 }
 
 func (m *DJSON) IsBool(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_BOOL
 	}
 
@@ -34,7 +34,7 @@ func (m *DJSON) IsBool(key ...interface{}) bool {
 }
 
 func (m *DJSON) IsInt(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_INT
 	}
 
@@ -42,7 +42,7 @@ func (m *DJSON) IsInt(key ...interface{}) bool {
 }
 
 func (m *DJSON) IsNumeric(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_FLOAT || m.JsonType == JSON_INT
 	}
 
@@ -50,7 +50,7 @@ func (m *DJSON) IsNumeric(key ...interface{}) bool {
 }
 
 func (m *DJSON) IsFloat(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_FLOAT
 	}
 
@@ -58,7 +58,7 @@ func (m *DJSON) IsFloat(key ...interface{}) bool {
 }
 
 func (m *DJSON) IsString(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_STRING
 	}
 
@@ -66,7 +66,7 @@ func (m *DJSON) IsString(key ...interface{}) bool {
 }
 
 func (m *DJSON) IsNull(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_NULL
 	}
 
@@ -74,7 +74,7 @@ func (m *DJSON) IsNull(key ...interface{}) bool {
 }
 
 func (m *DJSON) IsObject(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_OBJECT
 	}
 
@@ -82,7 +82,7 @@ func (m *DJSON) IsObject(key ...interface{}) bool {
 }
 
 func (m *DJSON) IsArray(key ...interface{}) bool {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		return m.JsonType == JSON_ARRAY
 	}
 
@@ -90,7 +90,7 @@ func (m *DJSON) IsArray(key ...interface{}) bool {
 }
 
 func (m *DJSON) GetType(key ...interface{}) string {
-	if len(key) == 0 {
+	if IsEmptyArg(key) {
 		switch m.JsonType {
 		case JSON_NULL:
 			return "null"
