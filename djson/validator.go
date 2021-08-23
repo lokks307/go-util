@@ -153,7 +153,7 @@ func init() {
 	HHMMRegExp = regexp.MustCompile(`^([0-1][0-9]|2[0-3])\:{0,1}([0-5][0-9])$`)
 	EmailRegExp = regexp.MustCompile(`^([\w\.\_\-])*[a-zA-Z0-9]+([\w\.\_\-])*([a-zA-Z0-9])+([\w\.\_\-])+@([a-zA-Z0-9]+\.)+[a-zA-Z0-9]{2,8}$`)
 	UUIDRegExp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}$`)
-	TelRegExp = regexp.MustCompile(`^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$`)
+	TelRegExp = regexp.MustCompile(`^((|\+\d{1,2})(|[-.\s])\d{2}|\d{2,3}|\(\d{2,3}\))(|[-.\s])\d{3,4}(|[-.\s])\d{4}$`)
 }
 
 type VItem struct {

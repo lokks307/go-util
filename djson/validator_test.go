@@ -103,16 +103,51 @@ func TestValidator3(t *testing.T) {
 func TestValidator4(t *testing.T) {
 
 	dv := NewValidator()
-	dv.Compile(`{
-		"type": "OBJECT",
-		"object": {
-			"name": "HEX256.IF.EXIST",
-			"skill": "HEX256.IF.EXIST",
-			"home": "BOOL"
+	dv.Compile(`
+	{
+			"type": "OBJECT",
+			"object": {
+				"service_name": "STRING",
+				"service_id": "HEX256.IF.EXIST",
+				"call_address": "HEX256.IF.EXIST",
+				"medi": "HEX256.IF.EXIST",
+				"medi2": "HEX256.IF.EXIST",
+				"patient_id": "NONEMPTY.STRING",
+				"patient_tel": "TELEPHONE",
+				"patient_name": "NONEMPTY.STRING",
+				"patient_color": "STRING",
+				"patient_note": "STRING",
+				"patient_sms": "BOOL",
+				"patient_suptel": {
+				  "type": "ARRAY",
+				  "array": {
+					"type": "OBJECT",
+					"object":{
+					  "name": "NONEMPTY.STRING",
+					  "tel": "TELEPHONE"
+					}
+				  }
+				}
+			}
 		}
-	}`)
+	`)
 
-	asjon := NewDJSON().Parse(`{"name":"f0e42af202cb3fd1c45b973b3597951cd4a205b9d620217e84b09a6fd0cc96bf","skill":"","home":true}`)
+	asjon := NewDJSON().Parse(`{
+		"service_name": "",
+		"service_id": "",
+		"call_address": "",
+		"medi": "",
+		"medi2": "",
+		"patient_id": "99999",
+		"patient_tel": "010-1111-1111",
+		"patient_name": "삼색이",
+		"patient_color": "",
+		"patient_note": "",
+		"patient_sms": true,
+		"patient_suptel": [
+			{"name": "엄마삼색", "tel": "01010100202"}
+		]
+	}`)
 
 	if dv.IsValid(asjon) {
 		log.Println("valid")
