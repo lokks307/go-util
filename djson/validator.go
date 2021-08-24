@@ -2,6 +2,7 @@ package djson
 
 import (
 	"encoding/base64"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -129,7 +130,7 @@ func CheckFuncBoolString(ts string, vi ...int64) bool {
 	return tslower == "true" || tslower == "false"
 }
 
-func CheckHex256IfExist(ts string, vi ...int64) bool {
+func CheckHexIfExist(ts string, vi ...int64) bool {
 	if CheckFuncMinMaxString(ts, vi...) {
 		return CheckFuncHex(ts)
 	}
@@ -192,7 +193,7 @@ func (m *Validator) Compile(syntax string) bool {
 	m.RootItems = make([]*VItem, 0)
 
 	if m.Syntax.IsObject() || m.Syntax.IsString() {
-		vItem := GetVItem("", m.Syntax)
+		vItem := GetVItem("__root__", m.Syntax)
 		if vItem != nil {
 			m.RootItems = append(m.RootItems, vItem)
 		}
@@ -200,7 +201,7 @@ func (m *Validator) Compile(syntax string) bool {
 	} else if m.Syntax.IsArray() {
 		m.Syntax.Seek()
 		for es := m.Syntax.Next(); es != nil; es = m.Syntax.Next() {
-			vi := GetVItem("", es)
+			vi := GetVItem("__root__", es)
 			if vi != nil {
 				m.RootItems = append(m.RootItems, vi)
 			}
@@ -335,10 +336,8 @@ func GetVItem(name string, ejson *DJSON) *VItem {
 			}
 
 		case "ARRAY":
-			eitem.Type = V_TYPE_ARRAY
 			eitem.Min = ejson.GetAsInt("min", 0)
 		case "NONEMPTY.ARRAY":
-			eitem.Type = V_TYPE_ARRAY
 			if ejson.IsInt("size") {
 				eitem.Min = ejson.GetAsInt("size")
 				eitem.Max = eitem.Min
@@ -365,6 +364,7 @@ func GetVItem(name string, ejson *DJSON) *VItem {
 		}
 
 		if etype == "ARRAY" || etype == "NONEMPTY.ARRAY" {
+			eitem.Type = V_TYPE_ARRAY
 			eitem.Max = ejson.GetAsInt("max", 9007199254740991)
 			oa, ok := ejson.Get("array") // type of element
 			if ok {
@@ -372,13 +372,13 @@ func GetVItem(name string, ejson *DJSON) *VItem {
 				if oa.IsArray() {
 					oa.Seek()
 					for es := oa.Next(); es != nil; es = oa.Next() {
-						vi := GetVItem("", es)
+						vi := GetVItem("__array__", es)
 						if vi != nil {
 							eitem.SubItems = append(eitem.SubItems, vi)
 						}
 					}
 				} else if oa.IsString() || oa.IsObject() {
-					vi := GetVItem("", oa)
+					vi := GetVItem("__array__", oa)
 					eitem.SubItems = append(eitem.SubItems, vi)
 				}
 			}
@@ -417,16 +417,22 @@ func GetVItem(name string, ejson *DJSON) *VItem {
 		eitem.Min = 3
 		eitem.Max = 255
 		eitem.CheckFunc = CheckFuncEmail
+	case "INT.STRING":
+		fallthrough
 	case "INT_STRING":
 		eitem.Type = V_TYPE_STRING
 		eitem.Min = 1
 		eitem.Max = 17
 		eitem.CheckFunc = CheckFuncIntString
+	case "FLOAT.STRING":
+		fallthrough
 	case "FLOAT_STRING":
 		eitem.Type = V_TYPE_STRING
 		eitem.Min = 1
 		eitem.Max = 24
 		eitem.CheckFunc = CheckFuncFloatString
+	case "BOOL.STRING":
+		fallthrough
 	case "BOOL_STRING":
 		eitem.Type = V_TYPE_STRING
 		eitem.Min = 4
@@ -457,11 +463,16 @@ func GetVItem(name string, ejson *DJSON) *VItem {
 		eitem.Min = 4
 		eitem.Max = 20
 		eitem.CheckFunc = CheckTelephone
+	case "HEX128.IF.EXIST":
+		eitem.Type = V_TYPE_STRING
+		eitem.Min = 0
+		eitem.Max = 32
+		eitem.CheckFunc = CheckHexIfExist
 	case "HEX256.IF.EXIST":
 		eitem.Type = V_TYPE_STRING
 		eitem.Min = 0
 		eitem.Max = 64
-		eitem.CheckFunc = CheckHex256IfExist
+		eitem.CheckFunc = CheckHexIfExist
 	}
 
 	return eitem
@@ -473,6 +484,7 @@ func (m *Validator) IsValid(tjson *DJSON) bool {
 	}
 
 	if m.Syntax.IsObject() { // json must be valid one
+
 		for _, vitem := range m.RootItems {
 			return CheckVItem(vitem, tjson)
 		}
@@ -480,27 +492,8 @@ func (m *Validator) IsValid(tjson *DJSON) bool {
 	} else if m.Syntax.IsArray() || m.Syntax.IsString() {
 		// each element must be valid for one of vitems
 
-		if tjson.IsArray() {
-
-			if len(m.RootItems) == 0 {
-				return true
-			}
-
-			tjson.Seek()
-			for et := tjson.Next(); et != nil; et = tjson.Next() {
-				eachValid := false
-				for _, vitem := range m.RootItems {
-					if CheckVItem(vitem, et) {
-						eachValid = true
-						break
-					}
-				}
-
-				if !eachValid {
-					return false
-				}
-			}
-
+		if len(m.RootItems) == 0 {
+			log.Println("empty rootitems")
 			return true
 		}
 
@@ -518,11 +511,23 @@ func (m *Validator) IsValid(tjson *DJSON) bool {
 }
 
 func CheckVItem(vi *VItem, tjson *DJSON) bool {
-	if vi.IsRequred && vi.Name != "" && !tjson.HasKey(vi.Name) {
+	if vi.Name == "" {
 		return false
 	}
 
-	vtype := tjson.GetType(vi.Name)
+	var vtype string
+
+	if vi.Name == "__root__" || vi.Name == "__array__" {
+		vtype = tjson.GetType()
+	} else {
+		vtype = tjson.GetType(vi.Name)
+	}
+
+	log.Println("CheckVItem ", vi.Name, " ", vtype, " ", vi.Type, " ", tjson.ToString())
+
+	if vtype == "" && !vi.IsRequred {
+		return true
+	}
 
 	switch vi.Type {
 	case V_TYPE_INT:
@@ -530,7 +535,14 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 			return false
 		}
 
-		si := tjson.GetAsInt(vi.Name)
+		var si int64
+
+		if vi.Name == "__root__" || vi.Name == "__array__" {
+			si = tjson.GetAsInt()
+		} else {
+			si = tjson.GetAsInt(vi.Name)
+		}
+
 		if vi.Max < si || vi.Min > si {
 			return false
 		}
@@ -540,16 +552,21 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 			return false
 		}
 
-		sf := tjson.GetAsFloat(vi.Name)
-		if vi.MaxFloat < sf || vi.MinFloat > sf {
-			return false
-		}
+		fallthrough
+
 	case V_TYPE_FLOAT:
 		if vtype != "float" {
 			return false
 		}
 
-		sf := tjson.GetAsFloat(vi.Name)
+		var sf float64
+
+		if vi.Name == "__root__" || vi.Name == "__array__" {
+			sf = tjson.GetAsFloat()
+		} else {
+			sf = tjson.GetAsFloat(vi.Name)
+		}
+
 		if vi.MaxFloat < sf || vi.MinFloat > sf {
 			return false
 		}
@@ -558,7 +575,14 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 			return false
 		}
 
-		ss := tjson.GetAsString(vi.Name)
+		var ss string
+
+		if vi.Name == "__root__" || vi.Name == "__array__" {
+			ss = tjson.GetAsString()
+		} else {
+			ss = tjson.GetAsString(vi.Name)
+		}
+
 		lenv := int64(len(ss))
 
 		if lenv > vi.Max || lenv < vi.Min {
@@ -574,17 +598,28 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 		}
 
 	case V_TYPE_OBJECT:
-		so, ok := tjson.GetAsObject(vi.Name)
-		if vi.IsRequred && (!ok || so == nil || !so.IsObject()) {
+		if vi.Name == "__root__" && vtype != "object" {
 			return false
 		}
 
-		if vi.Name != "" && so == nil {
+		var so *DJSON
+		var ok bool
+
+		if vi.Name == "__root__" || vi.Name == "__array__" {
+			so, ok = tjson.GetAsObject()
+			if !ok {
+				return false
+			}
+		} else {
+			so, ok = tjson.GetAsObject(vi.Name)
+		}
+
+		if vi.IsRequred && !ok {
+			return false
+		}
+
+		if !ok {
 			return true
-		}
-
-		if so == nil {
-			return false
 		}
 
 		for _, svi := range vi.SubItems {
@@ -594,17 +629,28 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 		}
 
 	case V_TYPE_ARRAY:
-		sa, ok := tjson.GetAsArray(vi.Name)
-		if vi.IsRequred && (!ok || sa == nil || !sa.IsArray()) {
+		if vi.Name == "__root__" && vtype != "array" {
 			return false
 		}
 
-		if vi.Name != "" && sa == nil {
+		var sa *DJSON
+		var ok bool
+
+		if vi.Name == "__root__" || vi.Name == "__array__" {
+			sa, ok = tjson.GetAsArray()
+			if !ok {
+				return false
+			}
+		} else {
+			sa, ok = tjson.GetAsArray(vi.Name)
+		}
+
+		if vi.IsRequred && !ok {
+			return false
+		}
+
+		if !ok {
 			return true
-		}
-
-		if sa == nil {
-			return false
 		}
 
 		lenv := int64(sa.Length())
@@ -617,7 +663,7 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 				return true
 			}
 
-			sa.Seek()
+			sa.Seek() // valid element type
 			for ssa := sa.Next(); ssa != nil; ssa = sa.Next() {
 				isValid := false
 				for _, svi := range vi.SubItems {
@@ -633,7 +679,14 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 		}
 
 	case V_TYPE_BOOL:
-		ok := tjson.IsBool(vi.Name)
+
+		var ok bool
+		if vi.Name == "__root__" || vi.Name == "__array__" {
+			ok = tjson.IsBool()
+		} else {
+			ok = tjson.IsBool(vi.Name)
+		}
+
 		if vi.IsRequred && !ok {
 			return false
 		}
