@@ -16,7 +16,7 @@ func TestValidator1(t *testing.T) {
 				"min": 4,
 				"max": 25
 			},
-			"skills": {
+			"skill": {
 				"type": "ARRAY",
 				"array": [
 					{
@@ -29,7 +29,7 @@ func TestValidator1(t *testing.T) {
 		}
 	}`)
 
-	asjon := NewDJSON().Parse(`{"name": "wakeupbb", "skill": ["040809","aaaaaa"]}`)
+	asjon := NewDJSON().Parse(`{"name": "wakeupbb", "skill": ["040809","aaaaab"]}`)
 
 	if dv.IsValid(asjon) {
 		log.Println("valid")
@@ -105,32 +105,37 @@ func TestValidator4(t *testing.T) {
 	dv := NewValidator()
 	dv.Compile(`
 	{
-			"type": "OBJECT",
-			"object": {
-				"service_name": "STRING",
-				"service_id": "HEX256.IF.EXIST",
-				"call_address": "HEX256.IF.EXIST",
-				"medi": "HEX256.IF.EXIST",
-				"medi2": "HEX256.IF.EXIST",
-				"patient_id": "NONEMPTY.STRING",
-				"patient_tel": "TELEPHONE",
-				"patient_name": "NONEMPTY.STRING",
-				"patient_color": "STRING",
-				"patient_note": "STRING",
-				"patient_sms": "BOOL",
-				"patient_suptel": {
-				  "type": "ARRAY",
-				  "array": {
+		"type": "OBJECT",
+		"object": {
+			"service_name": "STRING",
+			"service_id": "HEX256.IF.EXIST",
+			"call_address": "HEX256.IF.EXIST",
+			"medi": "HEX256.IF.EXIST",
+			"medi2": "HEX256.IF.EXIST",
+			"patient_id": "NONEMPTY.STRING",
+			"patient_tel": "TELEPHONE",
+			"patient_name": "NONEMPTY.STRING",
+			"patient_color": "STRING",
+			"patient_note": "STRING",
+			"patient_sms": "BOOL",
+			"patient_suptel": {
+				"type": "ARRAY",
+				"array": {
 					"type": "OBJECT",
-					"object":{
-					  "name": "NONEMPTY.STRING",
-					  "tel": "TELEPHONE"
+					"object": {
+						"name": {
+							"type":"STRING",
+							"required":true
+						},
+						"tel": {
+							"type":"TELEPHONE",
+							"required":true
+						}
 					}
-				  }
 				}
 			}
 		}
-	`)
+	}`)
 
 	asjon := NewDJSON().Parse(`{
 		"service_name": "",
@@ -144,12 +149,62 @@ func TestValidator4(t *testing.T) {
 		"patient_color": "",
 		"patient_note": "",
 		"patient_sms": true,
-		"patient_suptel": [
-			{"name": "엄마삼색", "tel": "01010100202"}
-		]
+		"patient_suptel": [{"name":"father","tel":"010-6666-6666"}]
 	}`)
 
 	if dv.IsValid(asjon) {
+		log.Println("valid")
+	} else {
+		log.Println("not valid")
+	}
+
+}
+
+func TestValidator5(t *testing.T) {
+
+	dv := NewValidator()
+	dv.Compile(`
+	{
+		"type": "OBJECT",
+		"object": {}
+	}`)
+
+	asjon := NewDJSON().Parse(`{"name":"top"}`)
+	bsjon := NewDJSON().Parse(`[]`)
+
+	if dv.IsValid(asjon) {
+		log.Println("valid")
+	} else {
+		log.Println("not valid")
+	}
+
+	if dv.IsValid(bsjon) {
+		log.Println("valid")
+	} else {
+		log.Println("not valid")
+	}
+
+}
+
+func TestValidator6(t *testing.T) {
+
+	dv := NewValidator()
+	dv.Compile(`
+	[{
+		"type": "OBJECT",
+		"object": {}
+	},"HEX"]`)
+
+	asjon := NewDJSON().Parse(`{"name":"top"}`)
+	bsjon := NewDJSON().Parse(`BB112233`)
+
+	if dv.IsValid(asjon) {
+		log.Println("valid")
+	} else {
+		log.Println("not valid")
+	}
+
+	if dv.IsValid(bsjon) {
 		log.Println("valid")
 	} else {
 		log.Println("not valid")
