@@ -523,7 +523,7 @@ func CheckVItem(vi *VItem, tjson *DJSON) bool {
 		vtype = tjson.GetType(vi.Name)
 	}
 
-	log.Println("CheckVItem ", vi.Name, " ", vtype, " ", vi.Type, " ", tjson.ToString())
+	//log.Println("CheckVItem ", vi.Name, " ", vtype, " ", vi.Type, " ", tjson.ToString())
 
 	if vtype == "" && !vi.IsRequred {
 		return true
