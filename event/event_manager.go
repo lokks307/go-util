@@ -3,7 +3,7 @@ package event
 import (
 	"fmt"
 
-	"github.com/lokks307-dev/go-util/djson"
+	"github.com/lokks307/go-util/djson"
 	log "github.com/sirupsen/logrus"
 )
 

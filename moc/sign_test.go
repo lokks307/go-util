@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/lokks307-dev/go-util/bytesbuilder"
+	"github.com/lokks307/go-util/bytesbuilder"
 	"github.com/stretchr/testify/assert"
 )
 
