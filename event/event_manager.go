@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/lokks307/go-util/djson"
 	log "github.com/sirupsen/logrus"
@@ -33,6 +34,7 @@ type EventManager struct {
 	stage       EvtStage
 	skeyCount   int
 	combiner    []*Combiner
+	ssMutex     sync.RWMutex
 }
 
 var Bus chan AEvent
@@ -68,6 +70,9 @@ func (m *EventManager) Subscribe(funcp func(ae AEvent), etype ...string) string 
 }
 
 func (m *EventManager) UpdateSubscription(skey string, funcp func(ae AEvent), etype ...string) {
+	m.ssMutex.Lock()
+	defer m.ssMutex.Unlock()
+
 	m.ssFuncTable[skey] = funcp
 
 	for _, eachetype := range etype {
@@ -86,6 +91,8 @@ func (m *EventManager) UpdateSubscription(skey string, funcp func(ae AEvent), et
 }
 
 func (m *EventManager) RemoveSubscribe(skey string) {
+	m.ssMutex.Lock()
+	defer m.ssMutex.Unlock()
 
 	delete(m.ssFuncTable, skey)
 
@@ -142,6 +149,7 @@ func (m *EventManager) Run() error {
 					m.combiner[idx].Listen(&oneEvent)
 				}
 
+				m.ssMutex.RLock()
 				if skeyList, ok := m.ssNameTable[oneEvent.Type]; ok {
 					for _, skey := range skeyList {
 						if funcP, ok := m.ssFuncTable[skey]; ok {
@@ -149,6 +157,7 @@ func (m *EventManager) Run() error {
 						}
 					}
 				}
+				m.ssMutex.RUnlock()
 
 			}
 		}
