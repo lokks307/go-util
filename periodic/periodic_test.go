@@ -1,6 +1,7 @@
 package periodic
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -111,4 +112,32 @@ func Test_Scheduler_AnonymousFunc(t *testing.T) {
 
 	assert.Equal(t, 2, globalVal1, "globalVal1 should be 2")
 	assert.Equal(t, 2, globalVal2, "globalVal2 should be 2")
+}
+
+func Test_Scheduler_Resume(t *testing.T) {
+
+	nowTs := time.Now().UnixMilli()
+
+	s := NewScheduler()
+	s.RegisterTask(time.Millisecond*500, true, "aa", func() {
+		nowTs2 := time.Now().UnixMilli()
+		fmt.Println((nowTs2 - nowTs), " - tick")
+	})
+
+	s.RegisterTask(time.Millisecond*500, true, "bb", func() {
+		nowTs2 := time.Now().UnixMilli()
+		fmt.Println((nowTs2 - nowTs), " - tick bb")
+	})
+
+	s.Run()
+
+	time.Sleep(time.Millisecond * 750)
+
+	s.Call("aa")
+
+	time.Sleep(time.Millisecond * 3000)
+
+	s.Cancel("bb")
+
+	time.Sleep(time.Millisecond * 3000)
 }
