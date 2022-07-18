@@ -42,6 +42,10 @@ func NewScheduler() *Scheduler {
 
 //RegisterTask regiseter task
 func (s *Scheduler) RegisterTask(interval time.Duration, immediately bool, taskNameKey string, taskFunc interface{}, params ...interface{}) error {
+
+	s.rwMutex.Lock()
+	defer s.rwMutex.Unlock()
+
 	typ := reflect.TypeOf(taskFunc)
 	if typ.Kind() != reflect.Func {
 		return errors.New("only function can be registered")
@@ -66,10 +70,6 @@ func (s *Scheduler) RegisterTask(interval time.Duration, immediately bool, taskN
 	return nil
 }
 
-func (t *TaskInfo) pause() {
-	t.ticker.Stop()
-}
-
 func (t *TaskInfo) call() {
 	f := reflect.ValueOf(t.taskFunction)
 	in := make([]reflect.Value, len(t.taskParams))
@@ -78,7 +78,7 @@ func (t *TaskInfo) call() {
 		in[k] = reflect.ValueOf(param)
 	}
 
-	f.Call(in)
+	go f.Call(in)
 }
 
 func (t *TaskInfo) resume() {
@@ -101,7 +101,7 @@ func (t *TaskInfo) run() {
 					t.ticker.Stop()
 					break
 				}
-				f.Call(in)
+				go f.Call(in)
 			}
 		} else {
 			for range t.ticker.C {
@@ -109,7 +109,7 @@ func (t *TaskInfo) run() {
 					t.ticker.Stop()
 					break
 				}
-				f.Call(in)
+				go f.Call(in)
 			}
 		}
 	}()
@@ -133,7 +133,7 @@ func (s *Scheduler) Run(taskNames ...string) {
 
 	for _, taskName := range taskNames {
 		if task, ok := s.taskList[taskName]; ok {
-			if task.status == running {
+			if atomic.LoadInt32(&task.status) == running {
 				continue
 			}
 			task.run()
@@ -197,7 +197,6 @@ func (s *Scheduler) Call(taskNames ...string) {
 	if len(taskNames) == 0 {
 		for _, task := range s.taskList {
 			if atomic.LoadInt32(&task.status) == running {
-				task.pause()
 				task.call()
 				task.resume()
 			}
@@ -208,7 +207,6 @@ func (s *Scheduler) Call(taskNames ...string) {
 	for _, taskName := range taskNames {
 		if task, ok := s.taskList[taskName]; ok {
 			if atomic.LoadInt32(&task.status) == running {
-				task.pause()
 				task.call()
 				task.resume()
 			}
