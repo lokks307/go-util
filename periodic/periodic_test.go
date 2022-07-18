@@ -116,22 +116,22 @@ func Test_Scheduler_AnonymousFunc(t *testing.T) {
 
 func Test_Scheduler_Resume(t *testing.T) {
 
-	nowTs := time.Now().UnixMilli()
+	nowTs := time.Now().UnixNano()
 
 	s := NewScheduler()
 	s.RegisterTask(time.Millisecond*500, true, "aa", func() {
-		nowTs2 := time.Now().UnixMilli()
-		fmt.Println((nowTs2 - nowTs), " - tick")
+		nowTs2 := time.Now().UnixNano()
+		fmt.Println((nowTs2 - nowTs), " - tick aa")
 	})
 
 	s.RegisterTask(time.Millisecond*500, true, "bb", func() {
-		nowTs2 := time.Now().UnixMilli()
+		nowTs2 := time.Now().UnixNano()
 		fmt.Println((nowTs2 - nowTs), " - tick bb")
 	})
 
 	s.Run()
 
-	time.Sleep(time.Millisecond * 750)
+	time.Sleep(time.Millisecond * 250)
 
 	s.Call("aa")
 
