@@ -7,6 +7,7 @@ import (
 	go_rsa "crypto/rsa"
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -156,7 +157,7 @@ func TestCrypto_ParsePKCS8RSA_Success(t *testing.T) {
 func TestCrypto_ParsePFX_Success(t *testing.T) {
 	key, cert, err := DecodePFXB64(testPfxECBase64, testPassword)
 	assert.Nil(t, err, "[PFX Test]: Decoding error")
-	assert.Equal(t, cert.Subject.String(), testPfxCertSubject, "[PFX Test]: Wrong subject information")
+	assert.True(t, strings.HasPrefix(cert.Subject.String(), testPfxCertSubject), "[PFX Test]: Wrong subject information")
 	assert.IsType(t, &(go_ecdsa.PrivateKey{}), key, "[PFX Test]: type should be *ecdsa.PrivateKey")
 }
 

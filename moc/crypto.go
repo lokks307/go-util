@@ -117,6 +117,29 @@ func GetPublicKey(dataB64 string) (public interface{}, err error) {
 	}
 }
 
+func makeSigFromBigInt(r, s *big.Int, lenField int) []byte {
+	var sig []byte
+	var rBigIntRaw []byte
+	if len(r.Bytes()) < lenField {
+		for i := 0; i < lenField-len(r.Bytes()); i++ {
+			rBigIntRaw = append(rBigIntRaw, 0x00)
+		}
+	}
+	rBigIntRaw = append(rBigIntRaw, r.Bytes()...)
+
+	var sBigIntRaw []byte
+	if len(s.Bytes()) < lenField {
+		for i := 0; i < lenField-len(s.Bytes()); i++ {
+			sBigIntRaw = append(sBigIntRaw, 0x00)
+		}
+	}
+	sBigIntRaw = append(sBigIntRaw, s.Bytes()...)
+
+	sig = append(rBigIntRaw, sBigIntRaw...)
+
+	return sig
+}
+
 func DoSign(msg []byte, key interface{}) ([]byte, error) {
 	rng := rand.Reader
 	var signature []byte
@@ -131,23 +154,10 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 		var r *big.Int
 		var s *big.Int
 		r, s, err = ecdsa.Sign(rng, privKey, hashed[:])
-		var rBigIntRaw []byte
-		if len(r.Bytes()) < 32 { // FIXME: what if we have to support other eliptical curve like P-192, P-521?
-			for i := 0; i < 32-len(r.Bytes()); i++ {
-				rBigIntRaw = append(rBigIntRaw, 0x00)
-			}
+		if err == nil {
+			bitLen := privKey.Curve.Params().BitSize
+			signature = makeSigFromBigInt(r, s, int(bitLen/8))
 		}
-		rBigIntRaw = append(rBigIntRaw, r.Bytes()...)
-
-		var sBigIntRaw []byte
-		if len(s.Bytes()) < 32 {
-			for i := 0; i < 32-len(s.Bytes()); i++ {
-				sBigIntRaw = append(sBigIntRaw, 0x00)
-			}
-		}
-		sBigIntRaw = append(sBigIntRaw, s.Bytes()...)
-
-		signature = append(rBigIntRaw, sBigIntRaw...)
 	case ed25519.PrivateKey:
 		signature = ed25519.Sign(privKey, msg)
 	default:
@@ -160,7 +170,6 @@ func DoSign(msg []byte, key interface{}) ([]byte, error) {
 
 func Sign(msg []byte, skeyPem, pass string) ([]byte, error) {
 	privateKey, err := GetPrivateKey(skeyPem, pass)
-
 	if err != nil {
 		return nil, err
 	}
@@ -226,17 +235,11 @@ func VerifySignatureECDSA(msgRaw, sigRaw []byte, pubKey interface{}) bool {
 
 	hashed := sha256.Sum256(msgRaw)
 
-	if len(sigRaw) > 64 { // signature in DER format
-		var ecdsaInts []*big.Int
-
-		_, err := asn1.Unmarshal(sigRaw, &ecdsaInts)
-
-		if err != nil {
-			return false
-		}
-
+	var ecdsaInts []*big.Int
+	_, err := asn1.Unmarshal(sigRaw, &ecdsaInts)
+	if err == nil {
 		return ecdsa.Verify(ecKey, hashed[:], ecdsaInts[0], ecdsaInts[1])
-	} else {
+	} else { // signature is not der format
 		halfSigLen := len(sigRaw) / 2
 		r := new(big.Int)
 		r.SetBytes(sigRaw[:halfSigLen])
