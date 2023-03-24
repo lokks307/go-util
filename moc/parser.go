@@ -61,7 +61,7 @@ func ParseDataToDer(dataB64 string, pswd ...string) []byte {
 	var resDer []byte
 	var err error
 
-	if dataB64[0:11] == PemBeginPhrase { // this file is PEM format
+	if strings.HasPrefix(dataB64, PemBeginPhrase) { // this file is PEM format
 
 		if len(pswd) == 1 {
 			resDer, err = ParsePemToDer(dataB64, pswd[0])
