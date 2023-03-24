@@ -2,6 +2,8 @@ package djson
 
 import (
 	"encoding/json"
+	"log"
+	"math"
 	"reflect"
 
 	"github.com/volatiletech/null/v8"
@@ -18,6 +20,22 @@ func NewObject() *DO {
 }
 
 func (m *DO) Put(key string, value interface{}) *DO {
+
+	if IsFloatType(value) {
+		switch t := value.(type) {
+		case float32:
+			if !math.IsNaN(float64(t)) && !math.IsInf(float64(t), 0) {
+				m.Map[key] = t
+			}
+		case float64:
+			if !math.IsNaN(t) && !math.IsInf(float64(t), 0) {
+				m.Map[key] = t
+			}
+		}
+
+		return m
+	}
+
 	if IsBaseType(value) {
 		m.Map[key] = value
 		return m
@@ -29,9 +47,12 @@ func (m *DO) Put(key string, value interface{}) *DO {
 			return m
 		}
 		if f, err := n.Float64(); err == nil {
+			log.Println(math.IsNaN(f))
 			m.Map[key] = f
 			return m
 		}
+	} else {
+		log.Println("not ok")
 	}
 
 	switch t := value.(type) {
@@ -287,7 +308,10 @@ func (m *DO) ToStringPretty() string {
 }
 
 func (m *DO) ToString() string {
-	jsonByte, _ := json.Marshal(ConverObjectToMap(m))
+	jsonByte, err := json.Marshal(ConverObjectToMap(m))
+	if err != nil {
+		log.Println(err)
+	}
 	return string(jsonByte)
 }
 
@@ -305,6 +329,13 @@ func (m *DO) Equal(t *DO) bool {
 	}
 
 	for i := range m.Map {
+
+		if m.Map[i] == nil || t.Map[i] == nil {
+			if m.Map[i] == nil && t.Map[i] == nil {
+				continue
+			}
+			return false
+		}
 
 		mtype := reflect.TypeOf(m.Map[i]).String()
 		ttype := reflect.TypeOf(t.Map[i]).String()
@@ -368,6 +399,11 @@ func (m *DO) Clone() *DO {
 	t.Map = make(map[string]interface{})
 
 	for k := range m.Map {
+
+		if m.Map[k] == nil {
+			t.Map[k] = nil
+			continue
+		}
 
 		mtype := reflect.TypeOf(m.Map[k]).String()
 
