@@ -303,3 +303,20 @@ func TestSeekNext(t *testing.T) {
 
 	log.Println(bJson.ToString())
 }
+
+func TestFloat(t *testing.T) {
+
+	jsonDoc := `{"number": "NaN"}`
+
+	aJson := NewDJSON().Parse(jsonDoc)
+
+	log.Println(aJson.ToString())
+
+	bJson := NewDJSON(JSON_OBJECT)
+	bJson.Put("number", aJson.GetAsFloat("number"))
+	bJson.Put("number2", 1)
+
+	log.Println(bJson.ToString())
+	log.Println("2")
+
+}

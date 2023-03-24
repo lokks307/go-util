@@ -2,6 +2,7 @@ package djson
 
 import (
 	"encoding/json"
+	"math"
 	"reflect"
 	"sort"
 
@@ -29,6 +30,21 @@ func (m *DA) PushFront(values interface{}) *DA {
 
 func (m *DA) ReplaceAt(idx int, value interface{}) *DA {
 	if idx >= m.Size() || idx < 0 {
+		return m
+	}
+
+	if IsFloatType(value) {
+		switch t := value.(type) {
+		case float32:
+			if !math.IsNaN(float64(t)) && !math.IsInf(float64(t), 0) {
+				m.Element[idx] = t
+			}
+		case float64:
+			if !math.IsNaN(t) && !math.IsInf(float64(t), 0) {
+				m.Element[idx] = t
+			}
+		}
+
 		return m
 	}
 
