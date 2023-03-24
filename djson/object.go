@@ -330,6 +330,13 @@ func (m *DO) Equal(t *DO) bool {
 
 	for i := range m.Map {
 
+		if m.Map[i] == nil || t.Map[i] == nil {
+			if m.Map[i] == nil && t.Map[i] == nil {
+				continue
+			}
+			return false
+		}
+
 		mtype := reflect.TypeOf(m.Map[i]).String()
 		ttype := reflect.TypeOf(t.Map[i]).String()
 
@@ -392,6 +399,11 @@ func (m *DO) Clone() *DO {
 	t.Map = make(map[string]interface{})
 
 	for k := range m.Map {
+
+		if m.Map[k] == nil {
+			t.Map[k] = nil
+			continue
+		}
 
 		mtype := reflect.TypeOf(m.Map[k]).String()
 

@@ -252,3 +252,20 @@ func TestAppend(t *testing.T) {
 
 	log.Println(aJson.Append(bJson).ToString())
 }
+
+func TestCloneNil(t *testing.T) {
+	aJson := NewDJSON().Put(Array{
+		Object{
+			"name":  nil,
+			"skill": "apple",
+		},
+		Object{
+			"name":  "2",
+			"skill": "banana",
+		},
+	})
+
+	bJson := aJson.Clone()
+
+	log.Println(bJson.ToString())
+}

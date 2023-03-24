@@ -585,12 +585,14 @@ func (m *DA) Sort(isAsc bool) bool {
 
 	var elemType string
 	for i := range m.Element {
-		eachType := reflect.TypeOf(m.Element[i]).String()
-		if elemType == "" {
-			elemType = eachType
-		} else {
-			if elemType != eachType {
-				return false
+		if m.Element[i] != nil {
+			eachType := reflect.TypeOf(m.Element[i]).String()
+			if elemType == "" {
+				elemType = eachType
+			} else {
+				if elemType != eachType {
+					return false
+				}
 			}
 		}
 	}
@@ -675,6 +677,13 @@ func (m *DA) Equal(t *DA) bool {
 
 	for i := range m.Element {
 
+		if m.Element[i] == nil || t.Element[i] == nil {
+			if m.Element[i] == nil && t.Element[i] == nil {
+				continue
+			}
+			return false
+		}
+
 		mtype := reflect.TypeOf(m.Element[i]).String()
 		ttype := reflect.TypeOf(t.Element[i]).String()
 
@@ -737,6 +746,9 @@ func (m *DA) Clone() *DA {
 	t.Element = make([]interface{}, m.Size())
 
 	for i := range m.Element {
+		if m.Element[i] == nil {
+			t.Element[i] = nil
+		}
 
 		mtype := reflect.TypeOf(m.Element[i]).String()
 
