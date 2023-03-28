@@ -2,7 +2,6 @@ package djson
 
 import (
 	"encoding/json"
-	"log"
 	"math"
 	"reflect"
 
@@ -47,12 +46,10 @@ func (m *DO) Put(key string, value interface{}) *DO {
 			return m
 		}
 		if f, err := n.Float64(); err == nil {
-			log.Println(math.IsNaN(f))
+			// log.Println(math.IsNaN(f))
 			m.Map[key] = f
 			return m
 		}
-	} else {
-		log.Println("not ok")
 	}
 
 	switch t := value.(type) {
@@ -310,7 +307,8 @@ func (m *DO) ToStringPretty() string {
 func (m *DO) ToString() string {
 	jsonByte, err := json.Marshal(ConverObjectToMap(m))
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
+		return ""
 	}
 	return string(jsonByte)
 }

@@ -2,7 +2,6 @@ package djson
 
 import (
 	"encoding/base64"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -544,7 +543,7 @@ func (m *Validator) IsValid(tjson *DJSON) bool {
 		// each element must be valid for one of vitems
 
 		if len(m.RootItems) == 0 {
-			log.Println("empty rootitems")
+			// log.Println("empty rootitems")
 			return true
 		}
 
