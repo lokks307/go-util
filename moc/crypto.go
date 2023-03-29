@@ -235,11 +235,12 @@ func VerifySignatureECDSA(msgRaw, sigRaw []byte, pubKey interface{}) bool {
 
 	hashed := sha256.Sum256(msgRaw)
 
-	var ecdsaInts []*big.Int
-	_, err := asn1.Unmarshal(sigRaw, &ecdsaInts)
-	if err == nil {
-		return ecdsa.Verify(ecKey, hashed[:], ecdsaInts[0], ecdsaInts[1])
-	} else { // signature is not der format
+	var esig struct {
+		R, S *big.Int
+	}
+
+	_, err := asn1.Unmarshal(sigRaw, &esig)
+	if err != nil { // signature is not der format
 		halfSigLen := len(sigRaw) / 2
 		r := new(big.Int)
 		r.SetBytes(sigRaw[:halfSigLen])
@@ -248,6 +249,8 @@ func VerifySignatureECDSA(msgRaw, sigRaw []byte, pubKey interface{}) bool {
 		s.SetBytes(sigRaw[halfSigLen:])
 
 		return ecdsa.Verify(ecKey, hashed[:], r, s)
+	} else {
+		return ecdsa.Verify(ecKey, hashed[:], esig.R, esig.S)
 	}
 }
 
