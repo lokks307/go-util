@@ -14,7 +14,6 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -93,6 +92,8 @@ func DecodePFXB64(pfxDataB64 string, password string) (privateKey interface{}, c
 }
 
 func GetPrivateKey(dataB64, password string) (key interface{}, err error) {
+	dataB64 = strings.TrimSpace(dataB64)
+
 	if IsPEMFormat([]byte(dataB64)) {
 		pemBlk, _ := pem.Decode([]byte(dataB64))
 		if pemBlk == nil {
@@ -111,8 +112,6 @@ func GetPrivateKey(dataB64, password string) (key interface{}, err error) {
 		} else {
 			raw = pemBlk.Bytes
 		}
-
-		fmt.Println("pem type=", pemBlk.Type)
 
 		switch pemBlk.Type {
 		case "RSA PRIVATE KEY":
