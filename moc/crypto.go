@@ -1,6 +1,7 @@
 package moc
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -9,9 +10,13 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/asn1"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/lokks307/pkcs8"
 	"software.sslmate.com/src/go-pkcs12"
@@ -19,6 +24,8 @@ import (
 
 // MOdern Cryptography library for TethysCore
 
+const BeginPEMFormat = "-----BEGIN"
+const EndPEMFormat = "-----"
 const BeginPhraseCertificate = "-----BEGIN CERTIFICATE-----"
 
 func GetCertificateOrPublicKey(dataB64 string) (interface{}, error) {
@@ -86,21 +93,74 @@ func DecodePFXB64(pfxDataB64 string, password string) (privateKey interface{}, c
 }
 
 func GetPrivateKey(dataB64, password string) (key interface{}, err error) {
-	derBytes := ParseDataToDer(dataB64, password)
-
-	// cannot check pkcs1 or pkcs8 type in der format. so try pkcs8 first and try pkcs1 again
-	privKey, _, err := pkcs8.ParsePrivateKey(derBytes, []byte(password))
-	if err != nil {
-		pkcs1Key, parseErr := x509.ParsePKCS1PrivateKey(derBytes)
-
-		if parseErr != nil {
-			return nil, parseErr
+	if IsPEMFormat([]byte(dataB64)) {
+		pemBlk, _ := pem.Decode([]byte(dataB64))
+		if pemBlk == nil {
+			return nil, errors.New("Failed to decode PEM format")
 		}
 
-		return pkcs1Key, nil
-	}
+		var raw []byte
 
-	return privKey, nil
+		if x509.IsEncryptedPEMBlock(pemBlk) {
+			decryptRaw, decryptErr := x509.DecryptPEMBlock(pemBlk, []byte(password))
+			if decryptErr != nil {
+				return nil, errors.New("Failed to decrypt PEM, " + decryptErr.Error())
+			} else {
+				raw = decryptRaw
+			}
+		} else {
+			raw = pemBlk.Bytes
+		}
+
+		fmt.Println("pem type=", pemBlk.Type)
+
+		switch pemBlk.Type {
+		case "RSA PRIVATE KEY":
+			key, err = x509.ParsePKCS1PrivateKey(raw)
+			return
+		case "EC PRIVATE KEY":
+			key, err = x509.ParseECPrivateKey(raw)
+			return
+		case "ENCRYPTED PRIVATE KEY":
+			key, err = pkcs8.ParsePKCS8PrivateKey(raw, []byte(password))
+			return
+		default:
+			key, err = x509.ParsePKCS8PrivateKey(raw)
+			return
+		}
+	} else {
+		// It is not PEM format. Probably base encoded DER format
+		// WARN: encrypted DER is not supported
+		dataB64 = strings.ReplaceAll(dataB64, "\n", "")
+		dataB64 = strings.ReplaceAll(dataB64, "\r", "")
+
+		dataB64Raw, decodeErr := base64.StdEncoding.DecodeString(dataB64)
+		if err != nil {
+			return nil, errors.New("Failed to decode DER base64, " + decodeErr.Error())
+		}
+
+		// cannot check pkcs1 or pkcs8 type in der format. so try pkcs8 first and try pkcs1 again
+		key, err = x509.ParsePKCS8PrivateKey(dataB64Raw)
+		if err == nil {
+			return
+		}
+
+		key, err = x509.ParseECPrivateKey(dataB64Raw)
+		if err == nil {
+			return
+		}
+
+		key, err = x509.ParsePKCS1PrivateKey(dataB64Raw)
+		if err == nil {
+			return
+		}
+
+		return nil, errors.New("Failed to parse private key")
+	}
+}
+
+func IsPEMFormat(in []byte) bool {
+	return bytes.HasPrefix(in, []byte(BeginPEMFormat)) && bytes.HasSuffix(in, []byte(EndPEMFormat))
 }
 
 func GetPublicKey(dataB64 string) (public interface{}, err error) {
