@@ -141,3 +141,24 @@ func Test_Scheduler_Resume(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 3000)
 }
+
+func TestSchedulerOption(t *testing.T) {
+	nowTs := time.Now().UnixNano() / 1e6
+
+	s := NewScheduler()
+	s.RegisterTaskOption(Option{
+		Immediately: true,
+		Interval:    time.Millisecond * 500,
+		Name:        "aa",
+		Func: func() {
+			nowTs2 := time.Now().UnixNano() / 1e6
+			fmt.Println((nowTs2 - nowTs), " - tick aa")
+			time.Sleep(1 * time.Second)
+		},
+	})
+
+	s.Run()
+
+	time.Sleep(time.Second * 10)
+
+}
