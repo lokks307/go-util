@@ -6,6 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/subchen/go-trylock/v2"
 )
 
 const (
@@ -20,9 +22,20 @@ type TaskInfo struct {
 	taskParams   []interface{}
 	interval     time.Duration
 	ticker       *time.Ticker
+	immediately  bool
+	concurrency  bool
+	locker       trylock.TryLocker
+	status       int32
+	name         string
+}
 
-	immediately bool
-	status      int32
+type Option struct {
+	Interval      time.Duration
+	Immediately   bool
+	ConcurrentRun bool
+	Name          string
+	Func          interface{}
+	Parameters    []interface{}
 }
 
 //Scheduler struct keep TaskInfos
@@ -38,6 +51,22 @@ func NewScheduler() *Scheduler {
 		rwMutex:  new(sync.RWMutex),
 	}
 	return scheduler
+}
+
+func (s *Scheduler) RegisterTaskOption(option Option) error {
+	err := s.RegisterTask(option.Interval, option.Immediately, option.Name, option.Func, option.Parameters...)
+	if err != nil {
+		return err
+	}
+
+	s.rwMutex.Lock()
+	defer s.rwMutex.Unlock()
+
+	if task, ok := s.taskList[option.Name]; ok {
+		task.concurrency = option.ConcurrentRun
+	}
+
+	return nil
 }
 
 //RegisterTask regiseter task
@@ -66,6 +95,9 @@ func (s *Scheduler) RegisterTask(interval time.Duration, immediately bool, taskN
 		interval:     interval,
 		immediately:  immediately,
 		status:       stop,
+		concurrency:  true,
+		locker:       trylock.New(),
+		name:         taskNameKey,
 	}
 	return nil
 }
@@ -78,7 +110,16 @@ func (t *TaskInfo) call() {
 		in[k] = reflect.ValueOf(param)
 	}
 
-	go f.Call(in)
+	go func() {
+		if !t.concurrency {
+			if lok := t.locker.TryLock(nil); lok {
+				defer t.locker.Unlock()
+				f.Call(in)
+			}
+		} else {
+			f.Call(in)
+		}
+	}()
 }
 
 func (t *TaskInfo) resume() {
@@ -101,7 +142,16 @@ func (t *TaskInfo) run() {
 					t.ticker.Stop()
 					break
 				}
-				go f.Call(in)
+				go func() {
+					if !t.concurrency {
+						if lok := t.locker.TryLock(nil); lok {
+							defer t.locker.Unlock()
+							f.Call(in)
+						}
+					} else {
+						f.Call(in)
+					}
+				}()
 			}
 		} else {
 			for range t.ticker.C {
@@ -109,7 +159,17 @@ func (t *TaskInfo) run() {
 					t.ticker.Stop()
 					break
 				}
-				go f.Call(in)
+
+				go func() {
+					if !t.concurrency {
+						if lok := t.locker.TryLock(nil); lok {
+							defer t.locker.Unlock()
+							f.Call(in)
+						}
+					} else {
+						f.Call(in)
+					}
+				}()
 			}
 		}
 	}()
